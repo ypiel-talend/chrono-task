@@ -20,9 +20,7 @@ public class TaskTableView extends TableView<Task> {
         this(new ArrayList<>());
     }
     public TaskTableView(final List<Task> tasks) {
-        super(FXCollections.observableArrayList(tasks));
-
-        this.getItems().add(new Task()); // Add empty line for task creation
+        this.setTasks(tasks);
 
         TableColumn<Task, Integer> orderColumn = new TableColumn<>("Order");
         orderColumn.setCellValueFactory(new PropertyValueFactory<>("order"));
@@ -75,7 +73,7 @@ public class TaskTableView extends TableView<Task> {
             switch (event.getCode()) {
                 case ENTER:
                     Task last = this.getItems().getLast();
-                    if(last.getOrder() <= 0 && last.getId().length() < 3){
+                    if(!last.isValid()){
                         break;
                     }
                     this.getItems().add(new Task());
@@ -88,5 +86,6 @@ public class TaskTableView extends TableView<Task> {
 
     public void setTasks(final List<Task> tasks) {
         this.setItems(FXCollections.observableArrayList(tasks));
+        this.getItems().add(new Task()); // Add empty line for task creation
     }
 }

@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,6 +23,10 @@ public class Task implements Serializable {
     private Status status = Status.New;
     private List<Task> subTasks = new ArrayList<>(10);
     private List<DurationByDate> durationsByDate = new ArrayList<>(10);
+
+    public boolean isValid(){
+        return order > 0 && id.length() > 3;
+    }
 
     @Data
     @NoArgsConstructor

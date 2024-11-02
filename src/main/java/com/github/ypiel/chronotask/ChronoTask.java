@@ -1,6 +1,7 @@
 package com.github.ypiel.chronotask;
 
 
+import com.github.ypiel.chronotask.business.DurationManager;
 import com.github.ypiel.chronotask.control.DurationByDateTableView;
 import com.github.ypiel.chronotask.control.TaskTableView;
 import com.github.ypiel.chronotask.model.Status;
@@ -12,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -21,14 +24,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class ChronoTask extends Application {
+
+    private final DurationManager durationManager = new DurationManager();
+    ;
 
     public static List<Task> buildTasksList() {
         List<Task> taskList = new ArrayList<>();
         Task task1 = new Task();
         task1.setOrder(1);
-        task1.setId("T1");
+        task1.setId("T1xx");
         task1.setShortDescription("Task 1");
         task1.setNotes("This is the first task");
         task1.setStatus(Status.New);
@@ -36,7 +43,7 @@ public class ChronoTask extends Application {
 
         Task task2 = new Task();
         task2.setOrder(2);
-        task2.setId("T2");
+        task2.setId("T2xx");
         task2.setShortDescription("Task 2");
         task2.setNotes("This is the second task");
         task2.setStatus(Status.InProgress);
@@ -67,7 +74,7 @@ public class ChronoTask extends Application {
 
         Task task3 = new Task();
         task3.setOrder(3);
-        task3.setId("T3");
+        task3.setId("T3xx");
         task3.setShortDescription("Task 3");
         task3.setNotes("This is the third task");
         task3.setStatus(Status.OnHold);
@@ -77,7 +84,7 @@ public class ChronoTask extends Application {
 
         Task task4 = new Task();
         task4.setOrder(4);
-        task4.setId("T4");
+        task4.setId("T4xx");
         task4.setShortDescription("Task 4");
         task4.setNotes("This is the fourth task");
         task4.setStatus(Status.Closed);
@@ -90,6 +97,8 @@ public class ChronoTask extends Application {
     public void start(Stage primaryStage) {
         final List<Task> tasks = buildTasksList();
 
+        durationManager.start();
+
         final TaskTableView taskTableView = new TaskTableView(tasks);
         final DurationByDateTableView durationByDateTableView = new DurationByDateTableView();
 
@@ -97,37 +106,84 @@ public class ChronoTask extends Application {
         final DurationByDateTableView todoDurationByDateTableView = new DurationByDateTableView();
 
         taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            System.out.println("TASKS SELECTION Previous selected task: " + oldValue);
-            System.out.println("TASKS SELECTION New selected task: " + newValue);
-            System.out.println("TASKS SELECTION Observable: " + observable.getValue().getId());
-
-            if(observable.getValue() == null) {
+            if (observable.getValue() == null) {
                 durationByDateTableView.setDurationsByDate(Collections.emptyList());
+            }
+
+            if (oldValue != null) {
+                durationManager.removeTasks(oldValue);
             }
 
             if (newValue != null) {
                 durationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
                 todoTableView.setTasks(newValue.getSubTasks());
+
+                if (newValue.isValid()) {
+                    durationManager.addTasks(newValue);
+                }
             }
         });
 
+        Timeline timelineRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            durationByDateTableView.refresh();
+        }));
+        timelineRefresh.setCycleCount(Timeline.INDEFINITE);
+        timelineRefresh.play();
+
+        Timeline timelineReload = new Timeline(new KeyFrame(Duration.seconds(15), event -> {
+            Task t = taskTableView.getSelectionModel().getSelectedItem();
+            if (t != null) {
+                durationByDateTableView.setDurationsByDate(t.getDurationsByDate());
+            }
+        }));
+        timelineReload.setCycleCount(Timeline.INDEFINITE);
+        timelineReload.play();
+
+
         todoTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            System.out.println("TODO SELECTION Previous selected task: " + oldValue);
-            System.out.println("TODO SELECTION New selected task: " + newValue);
-
-            String id = observable.getValue() == null ? "X" : observable.getValue().getId();
-            System.out.println("TODO SELECTION Observable: " + id);
-
-            if(observable.getValue() == null) {
+            if (observable.getValue() == null) {
                 todoDurationByDateTableView.setDurationsByDate(Collections.emptyList());
+            }
+
+            if (oldValue != null) {
+                durationManager.removeTasks(oldValue);
             }
 
             if (newValue != null) {
                 todoDurationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
+                if (newValue.isValid()) {
+                    durationManager.addTasks(newValue);
+                }
             }
         });
 
+
+        Timeline timelineTodoRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            todoDurationByDateTableView.refresh();
+        }));
+        timelineTodoRefresh.setCycleCount(Timeline.INDEFINITE);
+        timelineTodoRefresh.play();
+
+        Timeline timelineTodoReload = new Timeline(new KeyFrame(Duration.seconds(15), event -> {
+            Task t = todoTableView.getSelectionModel().getSelectedItem();
+            if (t != null) {
+                todoDurationByDateTableView.setDurationsByDate(t.getDurationsByDate());
+            }
+        }));
+        timelineTodoReload.setCycleCount(Timeline.INDEFINITE);
+        timelineTodoReload.play();
+
         Button btPause = new Button("Pause");
+        btPause.setOnAction(event -> {
+            if (btPause.getText().equals("Pause")) {
+                durationManager.pause();
+                btPause.setText("Resume");
+            } else {
+                durationManager.resume();
+                btPause.setText("Pause");
+            }
+        });
+
         Label lblDayDuration = new Label("Day duration");
 
 
@@ -166,6 +222,15 @@ public class ChronoTask extends Application {
         primaryStage.setScene(scene);
         primaryStage.setTitle("Task Manager");
         primaryStage.show();
+    }
+
+    @Override
+    public void stop() throws Exception {
+        if (durationManager != null) {
+            durationManager.stop();
+        }
+
+        super.stop();
     }
 
     public static void main(String[] args) {
