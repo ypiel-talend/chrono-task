@@ -12,6 +12,7 @@ import java.time.Month;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -112,6 +113,7 @@ public class ChronoTask extends Application {
 
             if (oldValue != null) {
                 durationManager.removeTasks(oldValue);
+                oldValue.setSubTasks(todoTableView.getItems().stream().filter(Task::isValid).collect(Collectors.toList()));
             }
 
             if (newValue != null) {
