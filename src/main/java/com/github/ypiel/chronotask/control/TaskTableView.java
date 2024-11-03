@@ -1,12 +1,16 @@
 package com.github.ypiel.chronotask.control;
 
+import com.github.ypiel.chronotask.ChronoTask;
 import com.github.ypiel.chronotask.model.Status;
 import com.github.ypiel.chronotask.model.Task;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ComboBoxTableCell;
@@ -57,8 +61,12 @@ public class TaskTableView extends TableView<Task> {
             task.setStatus(event.getNewValue());
         });
 
+        // Tags
+        ObservableList<String> availableTags = FXCollections.observableArrayList(Arrays.asList(ChronoTask.mainTopics));
+        TableColumn<Task, List<String>> tagsColumn = new TableColumn<>("Tags");
+        tagsColumn.setCellFactory(column -> new TagsTableCell(availableTags));
 
-        this.getColumns().addAll(orderColumn, idColumn, shortDescriptionColumn, notesColumn, statusColumn);
+        this.getColumns().addAll(orderColumn, idColumn, shortDescriptionColumn, statusColumn, tagsColumn, notesColumn);
 
         // Set cell factories to allow editing
         this.setEditable(true);

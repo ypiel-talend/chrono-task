@@ -29,6 +29,8 @@ import javafx.util.Duration;
 
 public class ChronoTask extends Application {
 
+    public final static String[] mainTopics = {"TDI", "QCS", "TCK", "PROCESS", "CONNECTIVITY CONVERGENCE"};
+
     private final DurationManager durationManager = new DurationManager();
     ;
 

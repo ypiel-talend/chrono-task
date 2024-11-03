@@ -11,6 +11,7 @@
         <maven-surefire-plugin.version>3.5.0</maven-surefire-plugin.version>
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <javafx-controls.version>22</javafx-controls.version>
+        <controlsfx.version>11.2.1</controlsfx.version>
     </properties>
     <version>1.0-SNAPSHOT</version>
     <name>chrono-task</name>
@@ -21,6 +22,11 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>${javafx-controls.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.controlsfx</groupId>
+            <artifactId>controlsfx</artifactId>
+            <version>${controlsfx.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

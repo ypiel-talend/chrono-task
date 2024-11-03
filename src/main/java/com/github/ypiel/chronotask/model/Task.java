@@ -21,7 +21,8 @@ public class Task implements Serializable {
     private String shortDescription = "";
     private String notes = "";
     private Status status = Status.New;
-    private List<Task> subTasks = new ArrayList<>(10);
+    private List<String> tags = new ArrayList<>();
+    private List<Task> subTasks = new ArrayList<>(5);
     private List<DurationByDate> durationsByDate = new ArrayList<>(10);
 
     public boolean isValid(){
