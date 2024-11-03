@@ -1,18 +1,25 @@
 package com.github.ypiel.chronotask;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.ypiel.chronotask.business.DurationManager;
 import com.github.ypiel.chronotask.control.DurationByDateTableView;
 import com.github.ypiel.chronotask.control.TaskTableView;
 import com.github.ypiel.chronotask.model.Status;
 import com.github.ypiel.chronotask.model.Task;
 
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -26,15 +33,22 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ChronoTask extends Application {
 
     public final static String[] mainTopics = {"TDI", "QCS", "TCK", "PROCESS", "CONNECTIVITY CONVERGENCE"};
 
-    private final DurationManager durationManager = new DurationManager();
-    ;
+    private static final String SAVE_DIR = System.getProperty("chrono.task.dir", System.getProperty("user.home") + "/chrono-task");
+    private static final String SAVE_FILE = Paths.get(SAVE_DIR, "chrono-task.json").toString();
 
-    public static List<Task> buildTasksList() {
+    private final DurationManager durationManager = new DurationManager();
+
+    private ObjectMapper jacksonMapper;
+
+    /*public static List<Task> buildTasksList() {
         List<Task> taskList = new ArrayList<>();
         Task task1 = new Task();
         task1.setOrder(1);
@@ -103,11 +117,12 @@ public class ChronoTask extends Application {
         taskList.add(task4);
 
         return taskList;
-    }
+    }*/
 
     @Override
     public void start(Stage primaryStage) {
-        final List<Task> tasks = buildTasksList();
+        initSerialization();
+        final List<Task> tasks = load();
 
         durationManager.start();
 
@@ -144,6 +159,13 @@ public class ChronoTask extends Application {
         }));
         timelineRefresh.setCycleCount(Timeline.INDEFINITE);
         timelineRefresh.play();
+
+        // Auto-save every minute
+        Timeline autoSave = new Timeline(new KeyFrame(Duration.seconds(60), event -> {
+            store(taskTableView.getItems());
+        }));
+        autoSave.setCycleCount(Timeline.INDEFINITE);
+        autoSave.play();
 
         todoTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (observable.getValue() == null) {
@@ -221,6 +243,12 @@ public class ChronoTask extends Application {
         primaryStage.show();
     }
 
+    private void initSerialization() {
+        this.jacksonMapper = JsonMapper.builder()
+                .findAndAddModules()
+                .build();
+    }
+
     @Override
     public void stop() throws Exception {
         if (durationManager != null) {
@@ -228,6 +256,31 @@ public class ChronoTask extends Application {
         }
 
         super.stop();
+    }
+
+    @SneakyThrows
+    private void store(List<Task> tasks) {
+        String dayOfYear = String.valueOf(LocalDate.now().getDayOfYear());
+        Files.createDirectories(Paths.get(SAVE_DIR));
+        try (FileWriter file = new FileWriter(SAVE_FILE)) {
+            this.jacksonMapper.writerWithDefaultPrettyPrinter().writeValue(file, tasks);
+            log.info("Saving tasks to {}.", SAVE_FILE);
+        }
+        Files.copy(Paths.get(SAVE_FILE), Paths.get(SAVE_FILE + "." + dayOfYear), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @SneakyThrows
+    private List<Task> load() {
+        // Backup at start
+        String dayOfYear = String.valueOf(LocalDate.now().getDayOfYear());
+        if(Files.exists(Path.of(SAVE_FILE), LinkOption.NOFOLLOW_LINKS)) {
+            Files.copy(Paths.get(SAVE_FILE), Paths.get(SAVE_FILE + ".start." + dayOfYear), StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        if(Files.exists(Path.of(SAVE_FILE), LinkOption.NOFOLLOW_LINKS)) {
+            return this.jacksonMapper.readValue(Paths.get(SAVE_FILE).toFile(), this.jacksonMapper.getTypeFactory().constructCollectionType(List.class, Task.class));
+        }
+        return new ArrayList<>();
     }
 
     public static void main(String[] args) {

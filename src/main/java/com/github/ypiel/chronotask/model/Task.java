@@ -1,5 +1,7 @@
 package com.github.ypiel.chronotask.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -25,6 +27,7 @@ public class Task implements Serializable {
     private List<Task> subTasks = new ArrayList<>(5);
     private List<DurationByDate> durationsByDate = new ArrayList<>(10);
 
+    @JsonIgnore
     public boolean isValid(){
         return order > 0 && id.length() > 3;
     }
