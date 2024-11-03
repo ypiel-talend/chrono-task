@@ -81,6 +81,15 @@ public class ChronoTask extends Application {
         task3.setStatus(Status.OnHold);
         task3.getDurationsByDate().add(new Task.DurationByDate(LocalDate.of(1945, Month.AUGUST, 6), java.time.Duration.ofHours(4), ""));
         task3.getDurationsByDate().add(new Task.DurationByDate(LocalDate.of(1947, Month.AUGUST, 16), java.time.Duration.ofHours(6), ""));
+
+        Task t3sb1 = new Task();
+        t3sb1.setOrder(1);
+        t3sb1.setId("T3.1");
+        t3sb1.setShortDescription("Task 3.1");
+        t3sb1.setNotes("This is the first sub task of the third task");
+        t3sb1.setStatus(Status.OnHold);
+        task3.getSubTasks().add(t3sb1);
+
         taskList.add(task3);
 
         Task task4 = new Task();
@@ -113,13 +122,15 @@ public class ChronoTask extends Application {
 
             if (oldValue != null) {
                 durationManager.removeTasks(oldValue);
-                oldValue.setSubTasks(todoTableView.getItems().stream().filter(Task::isValid).collect(Collectors.toList()));
+                //oldValue.setSubTasks(todoTableView.getItems().stream().filter(Task::isValid).collect(Collectors.toList()));
             }
 
             if (newValue != null) {
                 durationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
-                todoTableView.setTasks(newValue.getSubTasks());
+                newValue.setDurationsByDate(durationByDateTableView.getItems());
 
+                todoTableView.setTasks(newValue.getSubTasks());
+                newValue.setSubTasks(todoTableView.getItems());
                 if (newValue.isValid()) {
                     durationManager.addTasks(newValue);
                 }
@@ -132,16 +143,6 @@ public class ChronoTask extends Application {
         timelineRefresh.setCycleCount(Timeline.INDEFINITE);
         timelineRefresh.play();
 
-        Timeline timelineReload = new Timeline(new KeyFrame(Duration.seconds(15), event -> {
-            Task t = taskTableView.getSelectionModel().getSelectedItem();
-            if (t != null) {
-                durationByDateTableView.setDurationsByDate(t.getDurationsByDate());
-            }
-        }));
-        timelineReload.setCycleCount(Timeline.INDEFINITE);
-        timelineReload.play();
-
-
         todoTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (observable.getValue() == null) {
                 todoDurationByDateTableView.setDurationsByDate(Collections.emptyList());
@@ -153,6 +154,7 @@ public class ChronoTask extends Application {
 
             if (newValue != null) {
                 todoDurationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
+                newValue.setDurationsByDate(todoDurationByDateTableView.getItems());
                 if (newValue.isValid()) {
                     durationManager.addTasks(newValue);
                 }
@@ -165,15 +167,6 @@ public class ChronoTask extends Application {
         }));
         timelineTodoRefresh.setCycleCount(Timeline.INDEFINITE);
         timelineTodoRefresh.play();
-
-        Timeline timelineTodoReload = new Timeline(new KeyFrame(Duration.seconds(15), event -> {
-            Task t = todoTableView.getSelectionModel().getSelectedItem();
-            if (t != null) {
-                todoDurationByDateTableView.setDurationsByDate(t.getDurationsByDate());
-            }
-        }));
-        timelineTodoReload.setCycleCount(Timeline.INDEFINITE);
-        timelineTodoReload.play();
 
         Button btPause = new Button("Pause");
         btPause.setOnAction(event -> {

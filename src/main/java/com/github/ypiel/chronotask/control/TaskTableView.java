@@ -77,6 +77,7 @@ public class TaskTableView extends TableView<Task> {
                         break;
                     }
                     this.getItems().add(new Task());
+                    this.getSelectionModel().clearSelection();
                     break;
                 default:
                     break;
@@ -85,7 +86,7 @@ public class TaskTableView extends TableView<Task> {
     }
 
     public void setTasks(final List<Task> tasks) {
-        this.setItems(FXCollections.observableArrayList(tasks));
+        this.setItems(FXCollections.observableArrayList(tasks.stream().filter(Task::isValid).toList()));
         this.getItems().add(new Task()); // Add empty line for task creation
     }
 }

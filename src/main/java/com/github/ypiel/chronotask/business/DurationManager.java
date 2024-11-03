@@ -12,8 +12,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class DurationManager {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -56,7 +58,9 @@ public class DurationManager {
                     }
 
 
-                    durationOfToday.setDuration(durationOfToday.getDuration().plusMillis(current - lastTime.get()));
+                    long millisToAdd = current - lastTime.get();
+                    durationOfToday.setDuration(durationOfToday.getDuration().plusMillis(millisToAdd));
+                    log.debug("Task {} + {}ms => duration: {}", t.getId(), millisToAdd,durationOfToday.getDuration());
                 }
                 lastTime.set(current);
             }
