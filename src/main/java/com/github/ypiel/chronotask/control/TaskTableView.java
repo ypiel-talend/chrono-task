@@ -4,13 +4,16 @@ import com.github.ypiel.chronotask.ChronoTask;
 import com.github.ypiel.chronotask.model.Status;
 import com.github.ypiel.chronotask.model.Task;
 
+import java.awt.*;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ComboBoxTableCell;
@@ -18,12 +21,15 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.converter.DefaultStringConverter;
 import javafx.util.converter.IntegerStringConverter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class TaskTableView extends TableView<Task> {
 
     public TaskTableView() {
         this(new ArrayList<>());
     }
+
     public TaskTableView(final List<Task> tasks) {
         this.setTasks(tasks);
 
@@ -67,7 +73,40 @@ public class TaskTableView extends TableView<Task> {
         TableColumn<Task, List<String>> tagsColumn = new TableColumn<>("Tags");
         tagsColumn.setCellFactory(column -> new TagsTableCell(availableTags));
 
-        this.getColumns().addAll(orderColumn, idColumn, shortDescriptionColumn, statusColumn, tagsColumn, notesColumn);
+
+        TableColumn<Task, Void> openColumn = new TableColumn<>("Open");
+        openColumn.setCellFactory(column -> new TableCell<Task, Void>() {
+            private final Hyperlink openLink = new Hyperlink("open");
+
+            {
+                openLink.setOnAction(event -> {
+                    Task task = getTableView().getItems().get(getIndex());
+                    final String id = task.getId();
+                    log.debug("Try to open link: {}", id);
+                    if (id != null && id.startsWith("http")) {
+                        try {
+                            OpenLinkTask openLinkTask = new OpenLinkTask(id);
+                            new Thread(openLinkTask).start();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(openLink);
+                }
+            }
+        });
+
+
+        this.getColumns().addAll(orderColumn, idColumn, shortDescriptionColumn, statusColumn, tagsColumn, notesColumn, openColumn);
 
         // Set cell factories to allow editing
         this.setEditable(true);
@@ -97,7 +136,7 @@ public class TaskTableView extends TableView<Task> {
             switch (event.getCode()) {
                 case ENTER:
                     Task last = this.getItems().getLast();
-                    if(!last.isValid()){
+                    if (!last.isValid()) {
                         break;
                     }
                     this.getItems().add(new Task());
@@ -112,5 +151,24 @@ public class TaskTableView extends TableView<Task> {
     public void setTasks(final List<Task> tasks) {
         this.setItems(FXCollections.observableArrayList(tasks.stream().filter(Task::isValid).toList()));
         this.getItems().add(new Task()); // Add empty line for task creation
+    }
+
+    private static class OpenLinkTask extends javafx.concurrent.Task<Void> {
+        private final String id;
+
+        public OpenLinkTask(String id) {
+            this.id = id;
+        }
+
+        @Override
+        protected Void call() throws Exception {
+            try {
+                log.debug("Open link: {}", id);
+                Desktop.getDesktop().browse(new URI(id));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
     }
 }
