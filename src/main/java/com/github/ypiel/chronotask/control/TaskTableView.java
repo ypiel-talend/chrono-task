@@ -16,6 +16,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.util.converter.DefaultStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
 public class TaskTableView extends TableView<Task> {
@@ -71,7 +72,22 @@ public class TaskTableView extends TableView<Task> {
         // Set cell factories to allow editing
         this.setEditable(true);
         orderColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        idColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        idColumn.setCellFactory(column -> new TextFieldTableCell<Task, String>(new DefaultStringConverter()) {
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    // If Id is an URL dusplay only the last segment.
+                    if (item.startsWith("http")) {
+                        int i = item.lastIndexOf('/');
+                        item = item.substring(i + 1);
+                    }
+                    setText(item);
+                }
+            }
+        });
         shortDescriptionColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         notesColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         statusColumn.setCellFactory(ComboBoxTableCell.forTableColumn(Status.values()));
