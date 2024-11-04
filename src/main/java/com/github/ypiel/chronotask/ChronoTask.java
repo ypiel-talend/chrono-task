@@ -46,6 +46,8 @@ public class ChronoTask extends Application {
 
     private final DurationManager durationManager = new DurationManager();
 
+    private TaskTableView taskTableView;
+
     private ObjectMapper jacksonMapper;
 
     /*public static List<Task> buildTasksList() {
@@ -126,7 +128,7 @@ public class ChronoTask extends Application {
 
         durationManager.start();
 
-        final TaskTableView taskTableView = new TaskTableView(tasks);
+        this.taskTableView = new TaskTableView(tasks);
         final DurationByDateTableView durationByDateTableView = new DurationByDateTableView();
 
         final TaskTableView todoTableView = new TaskTableView();
@@ -254,6 +256,8 @@ public class ChronoTask extends Application {
         if (durationManager != null) {
             durationManager.stop();
         }
+
+        store(taskTableView.getItems());
 
         super.stop();
     }
