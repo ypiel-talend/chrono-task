@@ -20,6 +20,7 @@ import java.time.Month;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -39,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ChronoTask extends Application {
 
-    public final static String[] mainTopics = {"TDI", "QCS", "TCK", "PROCESS", "CONNECTIVITY CONVERGENCE"};
+    public final static String[] mainTopics = {"TDI", "QCS", "TCK", "PROCESS", "CONNECTIVITY CONVERGENCE", "CODE REVIEW", "MEETING"};
 
     private static final String SAVE_DIR = System.getProperty("chrono.task.dir", System.getProperty("user.home") + "/chrono-task");
     private static final String SAVE_FILE = Paths.get(SAVE_DIR, "chrono-task.json").toString();
@@ -49,6 +50,8 @@ public class ChronoTask extends Application {
     private TaskTableView taskTableView;
 
     private ObjectMapper jacksonMapper;
+
+    private final AtomicBoolean autoSaveEnabled = new AtomicBoolean(true);
 
     /*public static List<Task> buildTasksList() {
         List<Task> taskList = new ArrayList<>();
@@ -164,7 +167,9 @@ public class ChronoTask extends Application {
 
         // Auto-save every minute
         Timeline autoSave = new Timeline(new KeyFrame(Duration.seconds(60), event -> {
-            store(taskTableView.getItems());
+            if(autoSaveEnabled.get()) {
+                store(taskTableView.getItems());
+            }
         }));
         autoSave.setCycleCount(Timeline.INDEFINITE);
         autoSave.play();
@@ -198,9 +203,11 @@ public class ChronoTask extends Application {
         btPause.setOnAction(event -> {
             if (btPause.getText().equals("Pause")) {
                 durationManager.pause();
+                autoSaveEnabled.set(false);
                 btPause.setText("Resume");
             } else {
                 durationManager.resume();
+                autoSaveEnabled.set(true);
                 btPause.setText("Pause");
             }
         });
@@ -264,6 +271,7 @@ public class ChronoTask extends Application {
 
     @SneakyThrows
     private void store(List<Task> tasks) {
+        tasks = removeInvalidTasks(tasks);
         String dayOfYear = String.valueOf(LocalDate.now().getDayOfYear());
         Files.createDirectories(Paths.get(SAVE_DIR));
         try (FileWriter file = new FileWriter(SAVE_FILE)) {
@@ -271,6 +279,13 @@ public class ChronoTask extends Application {
             log.info("Saving tasks to {}.", SAVE_FILE);
         }
         Files.copy(Paths.get(SAVE_FILE), Paths.get(SAVE_FILE + "." + dayOfYear), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private List<Task> removeInvalidTasks(List<Task> tasks) {
+        return tasks.stream()
+                .filter(Task::isValid)
+                .peek(task -> task.setSubTasks(removeInvalidTasks(task.getSubTasks())))
+                .toList();
     }
 
     @SneakyThrows
