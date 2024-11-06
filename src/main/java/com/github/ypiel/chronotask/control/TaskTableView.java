@@ -54,13 +54,6 @@ public class TaskTableView extends TableView<Task> {
             task.setShortDescription(event.getNewValue());
         });
 
-        TableColumn<Task, String> notesColumn = new TableColumn<>("Notes");
-        notesColumn.setCellValueFactory(new PropertyValueFactory<>("notes"));
-        notesColumn.setOnEditCommit(event -> {
-            Task task = event.getRowValue();
-            task.setNotes(event.getNewValue());
-        });
-
         TableColumn<Task, Status> statusColumn = new TableColumn<>("Status");
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
         statusColumn.setOnEditCommit(event -> {
@@ -106,7 +99,7 @@ public class TaskTableView extends TableView<Task> {
         });
 
 
-        this.getColumns().addAll(orderColumn, idColumn, shortDescriptionColumn, statusColumn, tagsColumn, notesColumn, openColumn);
+        this.getColumns().addAll(orderColumn, idColumn, shortDescriptionColumn, statusColumn, tagsColumn, openColumn);
 
         // Set cell factories to allow editing
         this.setEditable(true);
@@ -128,7 +121,6 @@ public class TaskTableView extends TableView<Task> {
             }
         });
         shortDescriptionColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        notesColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         statusColumn.setCellFactory(ComboBoxTableCell.forTableColumn(Status.values()));
 
         // Add a key event handler to add a new task when ENTER is pressed

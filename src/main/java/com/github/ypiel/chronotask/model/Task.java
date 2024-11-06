@@ -32,6 +32,20 @@ public class Task implements Serializable {
         return order > 0 && id.length() > 3;
     }
 
+    @JsonIgnore
+    public String getViewId(){
+        if(isIdUrl()){
+            int lastSegment = this.getId().lastIndexOf('/');
+            return this.getId().substring(lastSegment + 1);
+        }
+        return this.getId();
+    }
+
+    @JsonIgnore
+    public boolean isIdUrl() {
+        return this.getId().startsWith("http");
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

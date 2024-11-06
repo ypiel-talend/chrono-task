@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.ypiel.chronotask.business.DurationManager;
 import com.github.ypiel.chronotask.control.DurationByDateTableView;
+import com.github.ypiel.chronotask.control.NotesEditor;
 import com.github.ypiel.chronotask.control.TaskTableView;
 import com.github.ypiel.chronotask.model.Status;
 import com.github.ypiel.chronotask.model.Task;
@@ -25,10 +26,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -131,6 +135,8 @@ public class ChronoTask extends Application {
 
         durationManager.start();
 
+        final NotesEditor notesEditor = new NotesEditor();
+
         this.taskTableView = new TaskTableView(tasks);
         final DurationByDateTableView durationByDateTableView = new DurationByDateTableView();
 
@@ -155,6 +161,7 @@ public class ChronoTask extends Application {
                 newValue.setSubTasks(todoTableView.getItems());
                 if (newValue.isValid()) {
                     durationManager.addTasks(newValue);
+                    notesEditor.setTask(newValue);
                 }
             }
         });
@@ -188,6 +195,7 @@ public class ChronoTask extends Application {
                 newValue.setDurationsByDate(todoDurationByDateTableView.getItems());
                 if (newValue.isValid()) {
                     durationManager.addTasks(newValue);
+                    notesEditor.setTask(newValue);
                 }
             }
         });
@@ -212,7 +220,39 @@ public class ChronoTask extends Application {
             }
         });
 
-        Label lblDayDuration = new Label("Day duration");
+        Label currentTasks = new Label("");
+
+        durationManager.addListener(new DurationManager.DurationManagerListener() {
+            @Override
+            public void onTaskDurationAddTask(DurationManager durationManager, Task task) {
+                currentTasks.setText(durationManager.toString());
+            }
+
+            @Override
+            public void onTaskDurationRemoveTask(DurationManager durationManager, Task task) {
+                currentTasks.setText(durationManager.toString());
+            }
+
+            @Override
+            public void onTaskDurationStart(DurationManager durationManager) {
+                currentTasks.setText(durationManager.toString());
+            }
+
+            @Override
+            public void onTaskDurationStop(DurationManager durationManager) {
+                currentTasks.setText(durationManager.toString());
+            }
+
+            @Override
+            public void onTaskDurationPause(DurationManager durationManager) {
+                currentTasks.setText(durationManager.toString());
+            }
+
+            @Override
+            public void onTaskDurationResume(DurationManager durationManager) {
+                currentTasks.setText(durationManager.toString());
+            }
+        });
 
 
         SplitPane splitPane = new SplitPane();
@@ -230,12 +270,12 @@ public class ChronoTask extends Application {
         todoDurationByDateTableView.maxHeightProperty().bind(rightVBox.heightProperty().multiply(1.0 / 3.0));
         rightVBox.getChildren().addAll(todoTableView, todoDurationByDateTableView);
 
-        splitPane.getItems().addAll(leftVBox, rightVBox);
-        HBox bottom = new HBox(btPause, lblDayDuration) {
+        splitPane.getItems().addAll(leftVBox, rightVBox, notesEditor);
+        HBox bottom = new HBox(btPause, currentTasks) {
             @Override
             protected void layoutChildren() {
                 super.layoutChildren();
-                double maxHeight = Math.max(btPause.getHeight(), lblDayDuration.getHeight());
+                double maxHeight = Math.max(btPause.getHeight(), currentTasks.getHeight());
                 setMinHeight(maxHeight);
                 setPrefHeight(maxHeight);
                 setMaxHeight(maxHeight);
