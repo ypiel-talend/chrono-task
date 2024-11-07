@@ -9,6 +9,8 @@ import com.github.ypiel.chronotask.control.NotesEditor;
 import com.github.ypiel.chronotask.control.TaskTableView;
 import com.github.ypiel.chronotask.model.Task;
 
+import org.fxmisc.richtext.InlineCssTextArea;
+
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -21,14 +23,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -293,14 +302,57 @@ public class ChronoTask extends Application {
             }
         };
 
-        VBox main = new VBox(splitPane, bottom);
-        VBox.setVgrow(splitPane, Priority.ALWAYS);
+        TextArea taExport = new TextArea();
+
+        DatePicker datePicker = new DatePicker(LocalDate.now());
+        Spinner<Integer> spinner = new Spinner<>();
+        SpinnerValueFactory<Integer> valueFactory =
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 60, 20, 1);
+        spinner.setValueFactory(valueFactory);
+        Button btExport = new Button("Export");
+        btExport.setOnAction(event -> {
+            LocalDate localDate = datePicker.getValue();
+            List<Task> found = taskTableView.getItems().stream()
+                    .filter(t -> t.getDurationsByDate().stream().anyMatch(d -> d.getDate().equals(localDate))).toList();
+            found = found.stream().filter(t -> t.getDurationsByDate().stream().filter(d -> d.getDate()
+                    .equals(localDate)).findAny().get().getDuration().compareTo(java.time.Duration.ofMinutes(spinner.getValue())) >= 0).collect(Collectors.toList());
+            String dailyWork = found.stream().map(t -> formatDuration(t.getDurationsByDate().stream()
+                            .filter(d -> d.getDate().equals(localDate)).findAny().get().getDuration()) + " - " + t.getViewId() + ": " + t.getShortDescription())
+                    .collect(Collectors.joining("\n"));
+            taExport.setText(dailyWork);
+        });
+
+        VBox vbExport = new VBox(new HBox(datePicker, new Label("(minimum of"), spinner, new Label(" minutes)"), btExport), taExport);
+        VBox.setVgrow(taExport, Priority.ALWAYS);
+
+
+        TabPane tabPane = new TabPane();
+        Tab workingTab = new Tab("Work", splitPane);
+        Tab exportTab = new Tab("Export", vbExport);
+        tabPane.getTabs().addAll(workingTab, exportTab);
+
+        VBox main = new VBox(tabPane, bottom);
+        VBox.setVgrow(tabPane, Priority.ALWAYS);
         VBox.setVgrow(bottom, Priority.ALWAYS);
         Scene scene = new Scene(main, 800, 600);
 
         primaryStage.setScene(scene);
         primaryStage.setTitle("Task Manager");
         primaryStage.show();
+    }
+
+    public static String formatDuration(java.time.Duration duration) {
+        long hours = duration.toHours();
+        long minutes = duration.toMinutes() % 60;
+        long seconds = duration.toSeconds() % 60;
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(hours < 10 ? "0" : "").append(hours).append(":");
+        sb.append(minutes < 10 ? "0" : "").append(minutes).append(":");
+        sb.append(seconds < 10 ? "0" : "").append(seconds);
+
+        return sb.toString();
     }
 
     private void initSerialization() {

@@ -126,7 +126,7 @@
                     <mainClass>com.github.ypiel.chronotask.ChronoTask</mainClass>
                     <options>
                         <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:7005</option>
-                        <option>-Dchrono.task.dir=/tmp/chrono-task</option>
+                        <!--option>-Dchrono.task.dir=/tmp/chrono-task</option -->
                     </options>
                 </configuration>
             </plugin>
