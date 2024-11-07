@@ -7,7 +7,6 @@ import com.github.ypiel.chronotask.business.DurationManager;
 import com.github.ypiel.chronotask.control.DurationByDateTableView;
 import com.github.ypiel.chronotask.control.NotesEditor;
 import com.github.ypiel.chronotask.control.TaskTableView;
-import com.github.ypiel.chronotask.model.Status;
 import com.github.ypiel.chronotask.model.Task;
 
 import java.io.FileWriter;
@@ -17,22 +16,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
-import java.time.Month;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
-import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -174,7 +170,7 @@ public class ChronoTask extends Application {
 
         // Auto-save every minute
         Timeline autoSave = new Timeline(new KeyFrame(Duration.seconds(60), event -> {
-            if(autoSaveEnabled.get()) {
+            if (autoSaveEnabled.get()) {
                 store(taskTableView.getItems());
             }
         }));
@@ -201,7 +197,7 @@ public class ChronoTask extends Application {
         });
 
 
-        Timeline timelineTodoRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+        Timeline timelineTodoRefresh = new Timeline(new KeyFrame(Duration.seconds(60), event -> {
             todoDurationByDateTableView.refresh();
         }));
         timelineTodoRefresh.setCycleCount(Timeline.INDEFINITE);
@@ -221,6 +217,19 @@ public class ChronoTask extends Application {
         });
 
         Label currentTasks = new Label("");
+        Label dayDuration = new Label("");
+        Timeline dayDurationRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            LocalDate now = LocalDate.now();
+            Optional<java.time.Duration> total = taskTableView.getItems().stream().flatMap(t -> t.getDurationsByDate().stream())
+                    .filter(d -> d.getDate().equals(now))
+                    .map(Task.DurationByDate::getDuration)
+                    .reduce(java.time.Duration::plus);
+            dayDuration
+                    .setText(total.map(d -> "Today: " + d.toHours() + "h " + d.toMinutesPart() + "m " + d.toSecondsPart() + "s")
+                            .orElse("Today: 0h 0m 0s"));
+        }));
+        dayDurationRefresh.setCycleCount(Timeline.INDEFINITE);
+        dayDurationRefresh.play();
 
         durationManager.addListener(new DurationManager.DurationManagerListener() {
             @Override
@@ -271,7 +280,7 @@ public class ChronoTask extends Application {
         rightVBox.getChildren().addAll(todoTableView, todoDurationByDateTableView);
 
         splitPane.getItems().addAll(leftVBox, rightVBox, notesEditor);
-        HBox bottom = new HBox(btPause, currentTasks) {
+        HBox bottom = new HBox(btPause, currentTasks, dayDuration) {
             @Override
             protected void layoutChildren() {
                 super.layoutChildren();
@@ -332,11 +341,11 @@ public class ChronoTask extends Application {
     private List<Task> load() {
         // Backup at start
         String dayOfYear = String.valueOf(LocalDate.now().getDayOfYear());
-        if(Files.exists(Path.of(SAVE_FILE), LinkOption.NOFOLLOW_LINKS)) {
+        if (Files.exists(Path.of(SAVE_FILE), LinkOption.NOFOLLOW_LINKS)) {
             Files.copy(Paths.get(SAVE_FILE), Paths.get(SAVE_FILE + ".start." + dayOfYear), StandardCopyOption.REPLACE_EXISTING);
         }
 
-        if(Files.exists(Path.of(SAVE_FILE), LinkOption.NOFOLLOW_LINKS)) {
+        if (Files.exists(Path.of(SAVE_FILE), LinkOption.NOFOLLOW_LINKS)) {
             return this.jacksonMapper.readValue(Paths.get(SAVE_FILE).toFile(), this.jacksonMapper.getTypeFactory().constructCollectionType(List.class, Task.class));
         }
         return new ArrayList<>();
