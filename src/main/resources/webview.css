@@ -1,0 +1,17 @@
+<style>
+body { 
+  font-family: 'Arial', sans-serif; 
+  padding: 20px; 
+}
+
+code { background-color: #F0F0F0; }
+
+h1 { color: #2e6c80; }
+
+blockquote {
+  margin-left: 1em;
+  border-left: 5px gray solid;
+  padding-left: 10px;
+  background-color: #F0F0F0;
+}
+</style>

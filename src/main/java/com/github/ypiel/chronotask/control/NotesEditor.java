@@ -9,10 +9,14 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Orientation;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.HBox;
@@ -25,6 +29,16 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class NotesEditor extends VBox {
+
+    private static final String WEBVIEW_CSS;
+    static {
+        try {
+            WEBVIEW_CSS = Files.readString(Paths.get(NotesEditor.class.getClassLoader()
+                    .getResource("webview.css").getPath()));
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to load CSS file", e);
+        }
+    }
 
     private Task task;
     private final Label lblNotesInfo;
@@ -57,8 +71,8 @@ public class NotesEditor extends VBox {
         autoRenderHTML.play();
     }
 
-    public void save(){
-        if(task == null) {
+    public void save() {
+        if (task == null) {
             return;
         }
 
@@ -71,22 +85,13 @@ public class NotesEditor extends VBox {
         HtmlRenderer renderer = HtmlRenderer.builder().build();
         String html = renderer.render(document);
 
-        String css = "<style>" +
-                "body { " +
-                "  font-family: 'Arial', sans-serif; " +
-                "  padding: 20px; " +
-                "}" +
-                "code { background-color: #F0F0F0; }" +
-                "h1 { color: #2e6c80; }" +
-                "blockquote {\n" +
-                "  margin-left: 1em;\n" +
-                "  border-left: 5px gray solid;\n" +
-                "padding-left: 10px;\n" +
-                "  background-color: #F0F0F0;\n" +
-                "}" +
-                "</style>";
 
-        html = "<html><head>" + css + "</head><body>" + html + "</body></html>";
+        StringBuilder sb = new StringBuilder("<html><head>");
+        sb.append(WEBVIEW_CSS);
+        sb.append("</head><body>");
+        sb.append(html);
+        sb.append("</body></html>");
+        html = sb.toString();
 
         System.out.println("============================");
         System.out.println(html);
@@ -98,7 +103,7 @@ public class NotesEditor extends VBox {
     public void setTask(Task task) {
         save();
 
-        if(!task.isValid()){
+        if (!task.isValid()) {
             this.removeTask();
             return;
         }
