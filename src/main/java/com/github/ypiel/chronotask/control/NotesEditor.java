@@ -34,18 +34,10 @@ public class NotesEditor extends VBox {
     public NotesEditor() {
         super();
         lblNotesInfo = new Label("Notes of ...");
-        Button btnSave = new Button("Save");
         codeArea = new CodeArea();
         codeArea.setParagraphGraphicFactory(LineNumberFactory.get(codeArea));
         WebView webView = new WebView();
         webEngine = webView.getEngine();
-
-        btnSave.setOnAction(e -> {
-            if (task != null) {
-                log.info("Save notes of task {}", task.getViewId());
-                task.setNotes(codeArea.getText());
-            }
-        });
 
         VirtualizedScrollPane<CodeArea> scrollPane = new VirtualizedScrollPane<>(codeArea);
 
@@ -53,15 +45,24 @@ public class NotesEditor extends VBox {
         splitPaneNotes.orientationProperty().set(Orientation.VERTICAL);
         splitPaneNotes.getItems().addAll(scrollPane, webView);
 
-        HBox menu = new HBox(lblNotesInfo, btnSave);
+        HBox menu = new HBox(lblNotesInfo);
         this.setVgrow(splitPaneNotes, Priority.ALWAYS);
         this.getChildren().addAll(menu, splitPaneNotes);
 
         Timeline autoRenderHTML = new Timeline(new KeyFrame(Duration.seconds(3), event -> {
             updateView();
+            save();
         }));
         autoRenderHTML.setCycleCount(Timeline.INDEFINITE);
         autoRenderHTML.play();
+    }
+
+    public void save(){
+        if(task == null) {
+            return;
+        }
+
+        task.setNotes(codeArea.getText());
     }
 
     private void updateView() {
@@ -95,6 +96,13 @@ public class NotesEditor extends VBox {
     }
 
     public void setTask(Task task) {
+        save();
+
+        if(!task.isValid()){
+            this.removeTask();
+            return;
+        }
+
         this.task = task;
         this.codeArea.replaceText(task.getNotes());
         lblNotesInfo.setText("Notes of " + task.getViewId());
@@ -102,6 +110,7 @@ public class NotesEditor extends VBox {
 
     public void removeTask() {
         this.task = null;
+        this.codeArea.replaceText("_No task selected_");
         lblNotesInfo.setText("Notes of ...");
     }
 

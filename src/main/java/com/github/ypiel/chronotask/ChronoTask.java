@@ -146,6 +146,7 @@ public class ChronoTask extends Application {
 
             if (oldValue != null) {
                 durationManager.removeTasks(oldValue);
+                notesEditor.removeTask();
                 //oldValue.setSubTasks(todoTableView.getItems().stream().filter(Task::isValid).collect(Collectors.toList()));
             }
 
@@ -184,6 +185,7 @@ public class ChronoTask extends Application {
 
             if (oldValue != null) {
                 durationManager.removeTasks(oldValue);
+                notesEditor.removeTask();
             }
 
             if (newValue != null) {
