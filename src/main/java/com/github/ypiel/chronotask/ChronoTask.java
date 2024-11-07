@@ -199,7 +199,7 @@ public class ChronoTask extends Application {
         });
 
 
-        Timeline timelineTodoRefresh = new Timeline(new KeyFrame(Duration.seconds(60), event -> {
+        Timeline timelineTodoRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
             todoDurationByDateTableView.refresh();
         }));
         timelineTodoRefresh.setCycleCount(Timeline.INDEFINITE);
@@ -220,7 +220,7 @@ public class ChronoTask extends Application {
 
         Label currentTasks = new Label("");
         Label dayDuration = new Label("");
-        Timeline dayDurationRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+        Timeline dayDurationRefresh = new Timeline(new KeyFrame(Duration.seconds(30), event -> {
             LocalDate now = LocalDate.now();
             Optional<java.time.Duration> total = taskTableView.getItems().stream().flatMap(t -> t.getDurationsByDate().stream())
                     .filter(d -> d.getDate().equals(now))
