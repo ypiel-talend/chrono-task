@@ -85,17 +85,12 @@ public class NotesEditor extends VBox {
         HtmlRenderer renderer = HtmlRenderer.builder().build();
         String html = renderer.render(document);
 
-
         StringBuilder sb = new StringBuilder("<html><head>");
         sb.append(WEBVIEW_CSS);
         sb.append("</head><body>");
         sb.append(html);
         sb.append("</body></html>");
         html = sb.toString();
-
-        System.out.println("============================");
-        System.out.println(html);
-        System.out.println("============================");
 
         webEngine.loadContent(html);
     }

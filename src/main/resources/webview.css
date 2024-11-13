@@ -7,6 +7,11 @@ body {
 code { background-color: #F0F0F0; }
 
 h1 { color: #2e6c80; }
+h2 { color: #2e6c80; }
+h3 { color: #2e6c80; }
+h4 { color: #2e6c80; }
+h5 { color: #2e6c80; }
+h6 { color: #2e6c80; }
 
 blockquote {
   margin-left: 1em;

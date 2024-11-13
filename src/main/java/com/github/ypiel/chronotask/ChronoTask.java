@@ -3,13 +3,12 @@ package com.github.ypiel.chronotask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.github.ypiel.chronotask.business.AutoTaskAction;
 import com.github.ypiel.chronotask.business.DurationManager;
 import com.github.ypiel.chronotask.control.DurationByDateTableView;
 import com.github.ypiel.chronotask.control.NotesEditor;
 import com.github.ypiel.chronotask.control.TaskTableView;
 import com.github.ypiel.chronotask.model.Task;
-
-import org.fxmisc.richtext.InlineCssTextArea;
 
 import java.io.FileWriter;
 import java.nio.file.Files;
@@ -28,6 +27,7 @@ import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
@@ -46,6 +46,7 @@ import javafx.util.Duration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+
 @Slf4j
 public class ChronoTask extends Application {
 
@@ -61,6 +62,8 @@ public class ChronoTask extends Application {
     private ObjectMapper jacksonMapper;
 
     private final AtomicBoolean autoSaveEnabled = new AtomicBoolean(true);
+
+    private Optional<Timeline> autoTaskActionTimeline = Optional.empty();
 
     /*public static List<Task> buildTasksList() {
         List<Task> taskList = new ArrayList<>();
@@ -149,27 +152,7 @@ public class ChronoTask extends Application {
         final DurationByDateTableView todoDurationByDateTableView = new DurationByDateTableView();
 
         taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (observable.getValue() == null) {
-                durationByDateTableView.setDurationsByDate(Collections.emptyList());
-            }
-
-            if (oldValue != null) {
-                durationManager.removeTasks(oldValue);
-                notesEditor.removeTask();
-                //oldValue.setSubTasks(todoTableView.getItems().stream().filter(Task::isValid).collect(Collectors.toList()));
-            }
-
-            if (newValue != null) {
-                durationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
-                newValue.setDurationsByDate(durationByDateTableView.getItems());
-
-                todoTableView.setTasks(newValue.getSubTasks());
-                newValue.setSubTasks(todoTableView.getItems());
-                if (newValue.isValid()) {
-                    durationManager.addTasks(newValue);
-                    notesEditor.setTask(newValue);
-                }
-            }
+            taskTableSelection(observable, oldValue, newValue, durationByDateTableView, notesEditor, todoTableView);
         });
 
         Timeline timelineRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
@@ -188,23 +171,7 @@ public class ChronoTask extends Application {
         autoSave.play();
 
         todoTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (observable.getValue() == null) {
-                todoDurationByDateTableView.setDurationsByDate(Collections.emptyList());
-            }
-
-            if (oldValue != null) {
-                durationManager.removeTasks(oldValue);
-                notesEditor.removeTask();
-            }
-
-            if (newValue != null) {
-                todoDurationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
-                newValue.setDurationsByDate(todoDurationByDateTableView.getItems());
-                if (newValue.isValid()) {
-                    durationManager.addTasks(newValue);
-                    notesEditor.setTask(newValue);
-                }
-            }
+            todoTableSelection(observable, oldValue, newValue, todoDurationByDateTableView, notesEditor);
         });
 
 
@@ -230,14 +197,7 @@ public class ChronoTask extends Application {
         Label currentTasks = new Label("");
         Label dayDuration = new Label("");
         Timeline dayDurationRefresh = new Timeline(new KeyFrame(Duration.seconds(30), event -> {
-            LocalDate now = LocalDate.now();
-            Optional<java.time.Duration> total = taskTableView.getItems().stream().flatMap(t -> t.getDurationsByDate().stream())
-                    .filter(d -> d.getDate().equals(now))
-                    .map(Task.DurationByDate::getDuration)
-                    .reduce(java.time.Duration::plus);
-            dayDuration
-                    .setText(total.map(d -> "Today: " + d.toHours() + "h " + d.toMinutesPart() + "m " + d.toSecondsPart() + "s")
-                            .orElse("Today: 0h 0m 0s"));
+            updateDayDuration(dayDuration);
         }));
         dayDurationRefresh.setCycleCount(Timeline.INDEFINITE);
         dayDurationRefresh.play();
@@ -311,15 +271,7 @@ public class ChronoTask extends Application {
         spinner.setValueFactory(valueFactory);
         Button btExport = new Button("Export");
         btExport.setOnAction(event -> {
-            LocalDate localDate = datePicker.getValue();
-            List<Task> found = taskTableView.getItems().stream()
-                    .filter(t -> t.getDurationsByDate().stream().anyMatch(d -> d.getDate().equals(localDate))).toList();
-            found = found.stream().filter(t -> t.getDurationsByDate().stream().filter(d -> d.getDate()
-                    .equals(localDate)).findAny().get().getDuration().compareTo(java.time.Duration.ofMinutes(spinner.getValue())) >= 0).collect(Collectors.toList());
-            String dailyWork = found.stream().map(t -> formatDuration(t.getDurationsByDate().stream()
-                            .filter(d -> d.getDate().equals(localDate)).findAny().get().getDuration()) + " - " + t.getViewId() + ": " + t.getShortDescription())
-                    .collect(Collectors.joining("\n"));
-            taExport.setText(dailyWork);
+            exportAction(datePicker, spinner, taExport);
         });
 
         VBox vbExport = new VBox(new HBox(datePicker, new Label("(minimum of"), spinner, new Label(" minutes)"), btExport), taExport);
@@ -334,12 +286,106 @@ public class ChronoTask extends Application {
         VBox main = new VBox(tabPane, bottom);
         VBox.setVgrow(tabPane, Priority.ALWAYS);
         VBox.setVgrow(bottom, Priority.ALWAYS);
+
         Scene scene = new Scene(main, 800, 600);
 
         primaryStage.setScene(scene);
         primaryStage.setTitle("Task Manager");
         primaryStage.show();
+
     }
+
+    private void exportAction(DatePicker datePicker, Spinner<Integer> spinner, TextArea taExport) {
+        LocalDate localDate = datePicker.getValue();
+        List<Task> found = taskTableView.getItems().stream()
+                .filter(t -> t.getDurationsByDate().stream().anyMatch(d -> d.getDate().equals(localDate))).toList();
+        found = found.stream().filter(t -> t.getDurationsByDate().stream().filter(d -> d.getDate()
+                .equals(localDate)).findAny().get().getDuration().compareTo(java.time.Duration.ofMinutes(spinner.getValue())) >= 0).collect(Collectors.toList());
+        String dailyWork = found.stream().map(t -> formatDuration(t.getDurationsByDate().stream()
+                        .filter(d -> d.getDate().equals(localDate)).findAny().get().getDuration()) + " - " + t.getViewId() + ": " + t.getShortDescription())
+                .collect(Collectors.joining("\n"));
+        taExport.setText(dailyWork);
+    }
+
+    private void updateDayDuration(Label dayDuration) {
+        LocalDate now = LocalDate.now();
+        Optional<java.time.Duration> total = taskTableView.getItems().stream().flatMap(t -> t.getDurationsByDate().stream())
+                .filter(d -> d.getDate().equals(now))
+                .map(Task.DurationByDate::getDuration)
+                .reduce(java.time.Duration::plus);
+        dayDuration
+                .setText(total.map(d -> "Today: " + d.toHours() + "h " + d.toMinutesPart() + "m " + d.toSecondsPart() + "s")
+                        .orElse("Today: 0h 0m 0s"));
+    }
+
+    private void todoTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView todoDurationByDateTableView, NotesEditor notesEditor) {
+        if (observable.getValue() == null) {
+            todoDurationByDateTableView.setDurationsByDate(Collections.emptyList());
+        }
+
+        if (oldValue != null) {
+            durationManager.removeTasks(oldValue);
+            notesEditor.removeTask();
+        }
+
+        if (newValue != null) {
+            todoDurationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
+            newValue.setDurationsByDate(todoDurationByDateTableView.getItems());
+            if (newValue.isValid()) {
+                durationManager.addTasks(newValue);
+                notesEditor.setTask(newValue);
+            }
+        }
+    }
+
+    private void taskTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView durationByDateTableView, NotesEditor notesEditor, TaskTableView todoTableView) {
+        if (observable.getValue() == null) {
+            durationByDateTableView.setDurationsByDate(Collections.emptyList());
+        }
+
+        if (oldValue != null) {
+            durationManager.removeTasks(oldValue);
+            notesEditor.removeTask();
+            //oldValue.setSubTasks(todoTableView.getItems().stream().filter(Task::isValid).collect(Collectors.toList()));
+        }
+
+        if (newValue != null) {
+            durationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
+            newValue.setDurationsByDate(durationByDateTableView.getItems());
+
+            todoTableView.setTasks(newValue.getSubTasks());
+            newValue.setSubTasks(todoTableView.getItems());
+            startAutoTaskAction(newValue);
+            if (newValue.isValid()) {
+                durationManager.addTasks(newValue);
+                notesEditor.setTask(newValue);
+            }
+        }
+    }
+
+    private void startAutoTaskAction(Task task) {
+        try {
+            AutoTaskAction autoTaskAction = (AutoTaskAction) task.getAutoTaskAction().getDeclaredConstructor().newInstance();
+            autoTaskAction.setTask(task);
+            if (autoTaskActionTimeline.isPresent()) {
+                autoTaskActionTimeline.get().stop();
+            }
+
+            if(task != null && task.isValid()) {
+
+                Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(autoTaskAction.getInterval().getSeconds()), event -> {
+                    autoTaskAction.run();
+                }));
+                timeline.setCycleCount(Timeline.INDEFINITE);
+                timeline.play();
+                this.autoTaskActionTimeline = Optional.of(timeline);
+            }
+
+        } catch (Exception e) {
+            log.error("Error starting auto task action", e);
+        }
+    }
+
 
     public static String formatDuration(java.time.Duration duration) {
         long hours = duration.toHours();

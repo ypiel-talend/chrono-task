@@ -1,6 +1,8 @@
 package com.github.ypiel.chronotask.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.github.ypiel.chronotask.business.AutoTaskAction;
+import com.github.ypiel.chronotask.business.IntervalAutoTaskAction;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -26,6 +28,7 @@ public class Task implements Serializable {
     private List<String> tags = new ArrayList<>();
     private List<Task> subTasks = new ArrayList<>(5);
     private List<DurationByDate> durationsByDate = new ArrayList<>(10);
+    private Class autoTaskAction = IntervalAutoTaskAction.class;
 
     @JsonIgnore
     public boolean isValid(){
