@@ -38,6 +38,7 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -48,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-public class ChronoTask extends Application {
+public class ChronoTask extends Application implements AutoTaskAction.Destination {
 
     public final static String[] mainTopics = {"TDI", "QCS", "TCK", "PROCESS", "CONNECTIVITY CONVERGENCE", "CODE REVIEW", "MEETING"};
 
@@ -58,12 +59,17 @@ public class ChronoTask extends Application {
     private final DurationManager durationManager = new DurationManager();
 
     private TaskTableView taskTableView;
+    private TaskTableView todoTableView;
+
+    private ToggleButton btPause;
 
     private ObjectMapper jacksonMapper;
 
     private final AtomicBoolean autoSaveEnabled = new AtomicBoolean(true);
 
     private Optional<Timeline> autoTaskActionTimeline = Optional.empty();
+
+    private Stage stage;
 
     /*public static List<Task> buildTasksList() {
         List<Task> taskList = new ArrayList<>();
@@ -138,6 +144,7 @@ public class ChronoTask extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        this.stage = primaryStage;
         initSerialization();
         final List<Task> tasks = load();
 
@@ -148,7 +155,7 @@ public class ChronoTask extends Application {
         this.taskTableView = new TaskTableView(tasks);
         final DurationByDateTableView durationByDateTableView = new DurationByDateTableView();
 
-        final TaskTableView todoTableView = new TaskTableView();
+        todoTableView = new TaskTableView();
         final DurationByDateTableView todoDurationByDateTableView = new DurationByDateTableView();
 
         taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -181,17 +188,9 @@ public class ChronoTask extends Application {
         timelineTodoRefresh.setCycleCount(Timeline.INDEFINITE);
         timelineTodoRefresh.play();
 
-        Button btPause = new Button("Pause");
+        btPause = new ToggleButton("Pause");
         btPause.setOnAction(event -> {
-            if (btPause.getText().equals("Pause")) {
-                durationManager.pause();
-                autoSaveEnabled.set(false);
-                btPause.setText("Resume");
-            } else {
-                durationManager.resume();
-                autoSaveEnabled.set(true);
-                btPause.setText("Pause");
-            }
+            doPause();
         });
 
         Label currentTasks = new Label("");
@@ -295,6 +294,16 @@ public class ChronoTask extends Application {
 
     }
 
+    private void doPause() {
+        if (btPause.isSelected()) {
+            durationManager.pause();
+            autoSaveEnabled.set(false);
+        } else {
+            durationManager.resume();
+            autoSaveEnabled.set(true);
+        }
+    }
+
     private void exportAction(DatePicker datePicker, Spinner<Integer> spinner, TextArea taExport) {
         LocalDate localDate = datePicker.getValue();
         List<Task> found = taskTableView.getItems().stream()
@@ -355,7 +364,7 @@ public class ChronoTask extends Application {
 
             todoTableView.setTasks(newValue.getSubTasks());
             newValue.setSubTasks(todoTableView.getItems());
-            startAutoTaskAction(newValue);
+            startAutoTaskAction(newValue, stage);
             if (newValue.isValid()) {
                 durationManager.addTasks(newValue);
                 notesEditor.setTask(newValue);
@@ -363,10 +372,10 @@ public class ChronoTask extends Application {
         }
     }
 
-    private void startAutoTaskAction(Task task) {
+    private void startAutoTaskAction(Task task, Stage stage) {
         try {
             AutoTaskAction autoTaskAction = (AutoTaskAction) task.getAutoTaskAction().getDeclaredConstructor().newInstance();
-            autoTaskAction.setTask(task);
+            autoTaskAction.setDestination(this);
             if (autoTaskActionTimeline.isPresent()) {
                 autoTaskActionTimeline.get().stop();
             }
@@ -455,4 +464,40 @@ public class ChronoTask extends Application {
         launch(args);
     }
 
+    @Override
+    public Task getSelectedMainTask() {
+        return taskTableView.getSelectionModel().getSelectedItem();
+    }
+
+    @Override
+    public Task getSelectedTodo() {
+        return todoTableView.getSelectionModel().getSelectedItem();
+    }
+
+    @Override
+    public void moveToFront() {
+        this.stage.toFront();
+    }
+
+    @Override
+    public void unselectAll() {
+        taskTableView.getSelectionModel().clearSelection();
+        todoTableView.getSelectionModel().clearSelection();
+    }
+
+    @Override
+    public void pause() {
+        btPause.setSelected(true);
+        doPause();
+    }
+    @Override
+    public void resume() {
+        btPause.setSelected(false);
+        doPause();
+    }
+
+    @Override
+    public boolean isPaused() {
+        return btPause.isSelected();
+    }
 }
