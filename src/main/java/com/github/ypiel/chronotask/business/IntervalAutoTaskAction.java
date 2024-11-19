@@ -4,7 +4,6 @@ import com.github.ypiel.chronotask.model.Task;
 
 import java.time.Duration;
 
-import dorkbox.notify.DesktopNotify;
 import dorkbox.notify.Notify;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -42,7 +41,7 @@ public class IntervalAutoTaskAction implements AutoTaskAction {
 
     @Override
     public Duration getInterval() {
-        return Duration.ofSeconds(5);
+        return Duration.ofMinutes(25);
     }
 
     @Override
