@@ -306,14 +306,37 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
 
     private void exportAction(DatePicker datePicker, Spinner<Integer> spinner, TextArea taExport) {
         LocalDate localDate = datePicker.getValue();
-        List<Task> found = taskTableView.getItems().stream()
-                .filter(t -> t.getDurationsByDate().stream().anyMatch(d -> d.getDate().equals(localDate))).toList();
-        found = found.stream().filter(t -> t.getDurationsByDate().stream().filter(d -> d.getDate()
-                .equals(localDate)).findAny().get().getDuration().compareTo(java.time.Duration.ofMinutes(spinner.getValue())) >= 0).collect(Collectors.toList());
-        String dailyWork = found.stream().map(t -> formatDuration(t.getDurationsByDate().stream()
-                        .filter(d -> d.getDate().equals(localDate)).findAny().get().getDuration()) + " - " + t.getViewId() + ": " + t.getShortDescription())
-                .collect(Collectors.joining("\n"));
-        taExport.setText(dailyWork);
+        java.time.Duration mini = java.time.Duration.ofMinutes(spinner.getValue());
+
+        String export = taskDurationFor(taskTableView.getItems(), localDate, mini, false);
+        taExport.setText(export);
+    }
+
+    private String taskDurationFor(List<Task> tasks, LocalDate date, java.time.Duration mini, boolean tab) {
+        StringBuilder sb = new StringBuilder();
+
+        boolean first = true;
+        for (Task t : tasks) {
+            Optional<Task.DurationByDate> durationByDate = t.getDurationsByDate().stream().filter(d -> d.getDate().equals(date)).findAny();
+            if (!durationByDate.isPresent() || durationByDate.get().getDuration().compareTo(mini) < 0) {
+                continue;
+            }
+
+            if (!first) {
+                sb.append("\n");
+            }
+
+            sb.append(tab ? "    " : "").append(formatDuration(durationByDate.get().getDuration())).append(" - ")
+                    .append(t.getViewId()).append(": ").append(t.getShortDescription());
+
+            List<Task> subTasks = t.getSubTasks();
+            String subs = taskDurationFor(subTasks, date, mini, true);
+            sb.append(subs.trim().isEmpty() ? "" : "\n" + subs);
+
+            first = false;
+        }
+
+        return sb.toString();
     }
 
     private void updateDayDuration(Label dayDuration) {
@@ -380,7 +403,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
                 autoTaskActionTimeline.get().stop();
             }
 
-            if(task != null && task.isValid()) {
+            if (task != null && task.isValid()) {
 
                 Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(autoTaskAction.getInterval().getSeconds()), event -> {
                     autoTaskAction.run();
@@ -490,6 +513,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         btPause.setSelected(true);
         doPause();
     }
+
     @Override
     public void resume() {
         btPause.setSelected(false);
