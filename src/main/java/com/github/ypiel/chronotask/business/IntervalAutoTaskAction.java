@@ -34,7 +34,7 @@ public class IntervalAutoTaskAction implements AutoTaskAction {
 
         Notifications.create()
                 .title(title)
-                .hideAfter(javafx.util.Duration.seconds(10))
+                .hideAfter(javafx.util.Duration.seconds(7))
                 .position(Pos.BOTTOM_RIGHT)
                 .action(new Action("Continue", event -> {
                             this.destination.resume();
@@ -58,8 +58,8 @@ public class IntervalAutoTaskAction implements AutoTaskAction {
 
     @Override
     public Duration getInterval() {
-        //return Duration.ofMinutes(25);
-        return Duration.ofSeconds(5);
+        return Duration.ofMinutes(25);
+        //return Duration.ofSeconds(5);
     }
 
     @Override
