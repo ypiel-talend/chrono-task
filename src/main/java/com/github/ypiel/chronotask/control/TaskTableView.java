@@ -8,10 +8,15 @@ import java.awt.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -26,12 +31,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TaskTableView extends TableView<Task> {
 
+    private BooleanProperty hideClosed = new SimpleBooleanProperty(false);
+
     public TaskTableView() {
         this(new ArrayList<>());
     }
 
     public TaskTableView(final List<Task> tasks) {
         this.setTasks(tasks);
+
+        hideClosed.addListener((observable, oldValue, newValue) -> {
+            this.setTasks(this.getAllItems());
+        });
 
         TableColumn<Task, Integer> orderColumn = new TableColumn<>("Order");
         orderColumn.setCellValueFactory(new PropertyValueFactory<>("order"));
@@ -131,7 +142,11 @@ public class TaskTableView extends TableView<Task> {
                     if (!last.isValid()) {
                         break;
                     }
-                    this.getItems().add(new Task());
+                    ObservableList<Task> items = this.getItems();
+                    if (items instanceof FilteredList) {
+                        items = ((FilteredList) items).getSource();
+                    }
+                    items.add(new Task());
                     this.getSelectionModel().clearSelection();
                     break;
                 default:
@@ -141,8 +156,27 @@ public class TaskTableView extends TableView<Task> {
     }
 
     public void setTasks(final List<Task> tasks) {
-        this.setItems(FXCollections.observableArrayList(tasks.stream().filter(Task::isValid).toList()));
-        this.getItems().add(new Task()); // Add empty line for task creation
+        tasks.sort(Comparator.comparingInt(Task::getOrder));
+        ObservableList<Task> observableTasks = FXCollections.observableArrayList(tasks.stream().filter(Task::isValid).toList());
+        observableTasks.add(new Task()); // Add empty line for task creation
+        FilteredList<Task> filteredTasks = new FilteredList<>(observableTasks, task -> task.getStatus() != Status.Closed || !hideClosed.get());
+        this.setItems(filteredTasks);
+    }
+
+    public List<Task> getAllItems() {
+        ObservableList<Task> items = this.getItems();
+        if (items instanceof FilteredList) {
+            items = ((FilteredList) items).getSource();
+        }
+        return items;
+    }
+
+    public void setShowEnabledTasks(boolean showEnabledTasks) {
+        this.hideClosed.set(showEnabledTasks);
+    }
+
+    public BooleanProperty hideClosedProperty() {
+        return hideClosed;
     }
 
     private static class OpenLinkTask extends javafx.concurrent.Task<Void> {
