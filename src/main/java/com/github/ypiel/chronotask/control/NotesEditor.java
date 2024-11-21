@@ -16,6 +16,9 @@ import java.nio.file.Paths;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
@@ -29,6 +32,8 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class NotesEditor extends VBox {
+
+    private double scrollpos = 0.0;
 
     private static final String WEBVIEW_CSS;
     static {
@@ -52,6 +57,17 @@ public class NotesEditor extends VBox {
         codeArea.setParagraphGraphicFactory(LineNumberFactory.get(codeArea));
         WebView webView = new WebView();
         webEngine = webView.getEngine();
+
+        webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
+            @Override
+            public void changed(ObservableValue<? extends Worker.State> observable, Worker.State oldValue, Worker.State newValue) {
+                if (newValue == Worker.State.SUCCEEDED) {
+                    // Restore the scroll position
+                    System.out.println("************** Set scroll position: " + scrollpos);
+                    webEngine.executeScript("window.scrollTo(0, " + scrollpos + ");");
+                }
+            }
+        });
 
         VirtualizedScrollPane<CodeArea> scrollPane = new VirtualizedScrollPane<>(codeArea);
 
@@ -92,6 +108,11 @@ public class NotesEditor extends VBox {
         sb.append("</body></html>");
         html = sb.toString();
 
+
+        // Get the current scroll position
+        Object scrollY = webEngine.executeScript("window.pageYOffset || document.documentElement.scrollTop;");
+        // Store the scroll position as a double
+        this.scrollpos = scrollY instanceof Number ? ((Number) scrollY).doubleValue() : 0.0;
         webEngine.loadContent(html);
     }
 

@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -156,8 +157,8 @@ public class TaskTableView extends TableView<Task> {
     }
 
     public void setTasks(final List<Task> tasks) {
-        tasks.sort(Comparator.comparingInt(Task::getOrder));
-        ObservableList<Task> observableTasks = FXCollections.observableArrayList(tasks.stream().filter(Task::isValid).toList());
+        List<Task> sorted = tasks.stream().filter(Task::isValid).sorted(Comparator.comparingInt(Task::getOrder)).collect(Collectors.toList());
+        ObservableList<Task> observableTasks = FXCollections.observableArrayList(sorted);
         observableTasks.add(new Task()); // Add empty line for task creation
         FilteredList<Task> filteredTasks = new FilteredList<>(observableTasks, task -> task.getStatus() != Status.Closed || !hideClosed.get());
         this.setItems(filteredTasks);

@@ -22,13 +22,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -82,6 +79,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         this.taskTableView = new TaskTableView(tasks);
         ToggleButton tbHideClosed = new ToggleButton("Hide closed");
         taskTableView.hideClosedProperty().bindBidirectional(tbHideClosed.selectedProperty());
+        tbHideClosed.setSelected(true);
 
         durationManager.start();
 
