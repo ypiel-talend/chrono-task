@@ -29,6 +29,7 @@ import javafx.application.Application;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
@@ -198,14 +199,16 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         DatePicker datePicker = new DatePicker(LocalDate.now());
         Spinner<Integer> spinner = new Spinner<>();
         SpinnerValueFactory<Integer> valueFactory =
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 60, 20, 1);
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 60, 2, 1);
         spinner.setValueFactory(valueFactory);
+        CheckBox cbDetailled = new CheckBox("Detailled");
+        cbDetailled.setSelected(true);
         Button btExport = new Button("Export");
         btExport.setOnAction(event -> {
-            exportAction(datePicker, spinner, taExport);
+            exportAction(datePicker, spinner, taExport, cbDetailled.isSelected());
         });
 
-        VBox vbExport = new VBox(new HBox(datePicker, new Label("(minimum of"), spinner, new Label(" minutes)"), btExport), taExport);
+        VBox vbExport = new VBox(new HBox(datePicker, new Label("(minimum of"), spinner, new Label(" minutes)"), cbDetailled, btExport), taExport);
         VBox.setVgrow(taExport, Priority.ALWAYS);
 
 
@@ -236,12 +239,40 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         }
     }
 
-    private void exportAction(DatePicker datePicker, Spinner<Integer> spinner, TextArea taExport) {
+    private void exportAction(DatePicker datePicker, Spinner<Integer> spinner, TextArea taExport, boolean detailled) {
         LocalDate localDate = datePicker.getValue();
         java.time.Duration mini = java.time.Duration.ofMinutes(spinner.getValue());
 
-        String export = taskDurationFor(taskTableView.getAllItems(), localDate, mini, false);
+        String export = detailled ?
+                            taskDurationFor(taskTableView.getAllItems(), localDate, mini, false):
+                            taskFor(taskTableView.getAllItems(), localDate, mini, false);
+
         taExport.setText(export);
+    }
+
+    private String taskFor(List<Task> tasks, LocalDate date, java.time.Duration mini, boolean tab) {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (Task t : tasks) {
+            Optional<Task.DurationByDate> durationByDate = t.getDurationsByDate().stream().filter(d -> d.getDate().equals(date)).findAny();
+
+            if (!durationByDate.isPresent() || durationByDate.get().getDuration().compareTo(mini) < 0) {
+                continue;
+            }
+            if (!first) {
+                sb.append("\n");
+            }
+            sb.append(tab ? "    - " : "- ")
+                    .append(t.getId()).append(": ").append(t.getShortDescription());
+
+            List<Task> subTasks = t.getSubTasks();
+            String subs = taskFor(subTasks, date, mini, true);
+            sb.append(subs.trim().isEmpty() ? "" : "\n" + subs);
+
+            first = false;
+        }
+
+        return sb.toString();
     }
 
     private String taskDurationFor(List<Task> tasks, LocalDate date, java.time.Duration mini, boolean tab) {
