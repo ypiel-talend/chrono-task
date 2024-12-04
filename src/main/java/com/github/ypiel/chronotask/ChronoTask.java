@@ -182,8 +182,34 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         todoDurationByDateTableView.maxHeightProperty().bind(rightVBox.heightProperty().multiply(1.0 / 3.0));
         rightVBox.getChildren().addAll(todoTableView, todoDurationByDateTableView);
 
+
+        Spinner<Integer> forceDurationSpinner = new Spinner<>();
+        SpinnerValueFactory<Integer> forceDurationSpinnerValueFactory =
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 10000, 2, 1);
+        forceDurationSpinner.setValueFactory(forceDurationSpinnerValueFactory);
+        forceDurationSpinner.setEditable(true);
+        Label lblForceDuration = new Label("Force duration (minutes)");
+        Button btForceDuration = new Button("Force duration");
+        btForceDuration.setOnAction(event -> {
+            Task toUpdate = todoTableView.getSelectionModel().getSelectedItem();
+            if(toUpdate == null){
+                toUpdate = taskTableView.getSelectionModel().getSelectedItem();
+            }
+
+            if(toUpdate != null){
+                log.info(String.format("Force duration for task %s", toUpdate.getShortDescription()));
+                LocalDate now = LocalDate.now();
+                toUpdate.getDurationsByDate().stream()
+                        .filter(d -> d.getDate().equals(now))
+                        .findAny()
+                        .ifPresent(d -> d.setDuration(java.time.Duration.ofMinutes(forceDurationSpinner.getValue())));
+            }
+
+        });
+
+
         splitPane.getItems().addAll(leftVBox, rightVBox, notesEditor);
-        HBox bottom = new HBox(btPause, tbHideClosed, currentTasks, dayDuration) {
+        HBox bottom = new HBox(btPause, tbHideClosed, currentTasks, dayDuration, lblForceDuration, forceDurationSpinner, btForceDuration) {
             @Override
             protected void layoutChildren() {
                 super.layoutChildren();
@@ -195,7 +221,6 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         };
 
         TextArea taExport = new TextArea();
-
         DatePicker datePicker = new DatePicker(LocalDate.now());
         Spinner<Integer> spinner = new Spinner<>();
         SpinnerValueFactory<Integer> valueFactory =
