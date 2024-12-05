@@ -66,7 +66,7 @@ public class DurationManager {
                     Task.DurationByDate durationOfToday;
                     if (!durationOfTodayOpt.isPresent()) {
                         durationOfToday = new Task.DurationByDate();
-                        durationsByDate.add(durationOfToday);
+                        durationsByDate.add(0, durationOfToday);
                     } else {
                         durationOfToday = durationOfTodayOpt.get();
                     }

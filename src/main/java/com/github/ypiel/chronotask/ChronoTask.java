@@ -185,7 +185,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
 
         Spinner<Integer> forceDurationSpinner = new Spinner<>();
         SpinnerValueFactory<Integer> forceDurationSpinnerValueFactory =
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 10000, 2, 1);
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(-1, 10000, -1, 1);
         forceDurationSpinner.setValueFactory(forceDurationSpinnerValueFactory);
         forceDurationSpinner.setEditable(true);
         Label lblForceDuration = new Label("Force duration (minutes)");
@@ -196,14 +196,17 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
                 toUpdate = taskTableView.getSelectionModel().getSelectedItem();
             }
 
-            if(toUpdate != null){
+            long spinnerValue = forceDurationSpinner.getValue();
+            if(toUpdate != null && spinnerValue >= 0){
                 log.info(String.format("Force duration for task %s", toUpdate.getShortDescription()));
                 LocalDate now = LocalDate.now();
                 toUpdate.getDurationsByDate().stream()
                         .filter(d -> d.getDate().equals(now))
                         .findAny()
-                        .ifPresent(d -> d.setDuration(java.time.Duration.ofMinutes(forceDurationSpinner.getValue())));
+                        .ifPresent(d -> d.setDuration(java.time.Duration.ofMinutes(spinnerValue)));
             }
+
+            forceDurationSpinner.getValueFactory().setValue(-1);
 
         });
 
