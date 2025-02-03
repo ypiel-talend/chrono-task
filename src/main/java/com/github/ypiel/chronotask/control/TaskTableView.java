@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import com.github.ypiel.chronotask.ChronoTask;
@@ -169,8 +170,8 @@ public class TaskTableView extends TableView<Task> {
         observableTasks.add(new Task()); // Add empty line for task creation
         FilteredList<Task> filteredTasks = new FilteredList<>(observableTasks, task -> {
             return (task.getStatus() != Status.Closed || !hideClosed.get()) &&
-                    (task.getId().contains(this.filterProperty.get()) ||
-                            task.getShortDescription().contains(this.filterProperty.get()));
+                    (task.getId().toLowerCase(Locale.ROOT).contains(this.filterProperty.get().toLowerCase(Locale.ROOT)) ||
+                            task.getShortDescription().toLowerCase(Locale.ROOT).contains(this.filterProperty.get().toLowerCase(Locale.ROOT)));
         });
         this.setItems(filteredTasks);
     }
