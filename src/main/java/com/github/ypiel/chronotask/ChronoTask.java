@@ -1,15 +1,6 @@
 package com.github.ypiel.chronotask;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.github.ypiel.chronotask.business.AutoTaskAction;
-import com.github.ypiel.chronotask.business.DurationManager;
-import com.github.ypiel.chronotask.control.DurationByDateTableView;
-import com.github.ypiel.chronotask.control.NotesEditor;
-import com.github.ypiel.chronotask.control.TaskTableView;
-import com.github.ypiel.chronotask.model.Task;
-
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -23,21 +14,33 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.github.ypiel.chronotask.business.AutoTaskAction;
+import com.github.ypiel.chronotask.business.DurationManager;
+import com.github.ypiel.chronotask.control.DurationByDateTableView;
+import com.github.ypiel.chronotask.control.NotesEditor;
+import com.github.ypiel.chronotask.control.TaskTableView;
+import com.github.ypiel.chronotask.model.Task;
+
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -182,6 +185,9 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         todoDurationByDateTableView.maxHeightProperty().bind(rightVBox.heightProperty().multiply(1.0 / 3.0));
         rightVBox.getChildren().addAll(todoTableView, todoDurationByDateTableView);
 
+        TextField tfFilter = new TextField();
+        taskTableView.getFilterProperty().bind(tfFilter.textProperty());
+        Label lblFilter = new Label("Filter: ");
 
         Spinner<Integer> forceDurationSpinner = new Spinner<>();
         SpinnerValueFactory<Integer> forceDurationSpinnerValueFactory =
@@ -212,7 +218,12 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
 
 
         splitPane.getItems().addAll(leftVBox, rightVBox, notesEditor);
-        HBox bottom = new HBox(btPause, tbHideClosed, currentTasks, dayDuration, lblForceDuration, forceDurationSpinner, btForceDuration) {
+        Separator separatorB = new Separator(Orientation.VERTICAL);
+        separatorB.setStyle("-fx-padding: 0 5 0 5;");
+        Separator separatorA = new Separator(Orientation.VERTICAL);
+        separatorA.setStyle("-fx-padding: 0 5 0 5;");
+
+        HBox bottom = new HBox(btPause, tbHideClosed, currentTasks, dayDuration, separatorA, lblForceDuration, forceDurationSpinner, btForceDuration, separatorB, lblFilter, tfFilter) {
             @Override
             protected void layoutChildren() {
                 super.layoutChildren();
@@ -359,7 +370,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         if (selectedTask != null && newValue != null) {
             Optional<Task> todo = selectedTask.getSubTasks().stream()
                     .filter(t -> t.equals(newValue)).findAny();
-            if(!todo.isPresent()){
+            if (!todo.isPresent()) {
                 selectedTask.getSubTasks().add(newValue);
             }
         }

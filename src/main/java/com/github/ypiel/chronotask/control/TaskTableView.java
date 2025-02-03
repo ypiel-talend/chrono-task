@@ -1,20 +1,21 @@
 package com.github.ypiel.chronotask.control;
 
-import com.github.ypiel.chronotask.ChronoTask;
-import com.github.ypiel.chronotask.model.Status;
-import com.github.ypiel.chronotask.model.Task;
-
 import java.awt.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.github.ypiel.chronotask.ChronoTask;
+import com.github.ypiel.chronotask.model.Status;
+import com.github.ypiel.chronotask.model.Task;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -34,6 +35,8 @@ public class TaskTableView extends TableView<Task> {
 
     private BooleanProperty hideClosed = new SimpleBooleanProperty(false);
 
+    private StringProperty filterProperty = new SimpleStringProperty("");
+
     public TaskTableView() {
         this(new ArrayList<>());
     }
@@ -42,6 +45,10 @@ public class TaskTableView extends TableView<Task> {
         this.setTasks(tasks);
 
         hideClosed.addListener((observable, oldValue, newValue) -> {
+            this.setTasks(this.getAllItems());
+        });
+
+        filterProperty.addListener((observable, oldValue, newValue) -> {
             this.setTasks(this.getAllItems());
         });
 
@@ -160,7 +167,11 @@ public class TaskTableView extends TableView<Task> {
         List<Task> sorted = tasks.stream().filter(Task::isValid).sorted(Comparator.comparingInt(Task::getOrder)).collect(Collectors.toList()).reversed();
         ObservableList<Task> observableTasks = FXCollections.observableArrayList(sorted);
         observableTasks.add(new Task()); // Add empty line for task creation
-        FilteredList<Task> filteredTasks = new FilteredList<>(observableTasks, task -> task.getStatus() != Status.Closed || !hideClosed.get());
+        FilteredList<Task> filteredTasks = new FilteredList<>(observableTasks, task -> {
+            return (task.getStatus() != Status.Closed || !hideClosed.get()) &&
+                    (task.getId().contains(this.filterProperty.get()) ||
+                            task.getShortDescription().contains(this.filterProperty.get()));
+        });
         this.setItems(filteredTasks);
     }
 
@@ -178,6 +189,10 @@ public class TaskTableView extends TableView<Task> {
 
     public BooleanProperty hideClosedProperty() {
         return hideClosed;
+    }
+
+    public StringProperty getFilterProperty() {
+        return this.filterProperty;
     }
 
     private static class OpenLinkTask extends javafx.concurrent.Task<Void> {
