@@ -185,19 +185,19 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
 
         Spinner<Integer> forceDurationSpinner = new Spinner<>();
         SpinnerValueFactory<Integer> forceDurationSpinnerValueFactory =
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(-1, 10000, -1, 1);
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(-1, 100000, -1, 1);
         forceDurationSpinner.setValueFactory(forceDurationSpinnerValueFactory);
         forceDurationSpinner.setEditable(true);
         Label lblForceDuration = new Label("Force duration (minutes)");
         Button btForceDuration = new Button("Force duration");
         btForceDuration.setOnAction(event -> {
             Task toUpdate = todoTableView.getSelectionModel().getSelectedItem();
-            if(toUpdate == null){
+            if (toUpdate == null) {
                 toUpdate = taskTableView.getSelectionModel().getSelectedItem();
             }
 
             long spinnerValue = forceDurationSpinner.getValue();
-            if(toUpdate != null && spinnerValue >= 0){
+            if (toUpdate != null && spinnerValue >= 0) {
                 log.info(String.format("Force duration for task %s", toUpdate.getShortDescription()));
                 LocalDate now = LocalDate.now();
                 toUpdate.getDurationsByDate().stream()
@@ -272,8 +272,8 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         java.time.Duration mini = java.time.Duration.ofMinutes(spinner.getValue());
 
         String export = detailled ?
-                            taskDurationFor(taskTableView.getAllItems(), localDate, mini, false):
-                            taskFor(taskTableView.getAllItems(), localDate, mini, false);
+                taskDurationFor(taskTableView.getAllItems(), localDate, mini, false) :
+                taskFor(taskTableView.getAllItems(), localDate, mini, false);
 
         taExport.setText(export);
     }
@@ -331,7 +331,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
             first = false;
         }
 
-        if(!tab){
+        if (!tab) {
             sb.append("\n\nWorking day: ").append(formatDuration(dayDuration));
         }
 
@@ -352,6 +352,16 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
     private void todoTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView todoDurationByDateTableView, NotesEditor notesEditor) {
         if (observable.getValue() == null) {
             todoDurationByDateTableView.setDurationsByDate(Collections.emptyList());
+        }
+
+        // Fix a bug about adding a todo to a task
+        Task selectedTask = taskTableView.getSelectionModel().getSelectedItem();
+        if (selectedTask != null && newValue != null) {
+            Optional<Task> todo = selectedTask.getSubTasks().stream()
+                    .filter(t -> t.equals(newValue)).findAny();
+            if(!todo.isPresent()){
+                selectedTask.getSubTasks().add(newValue);
+            }
         }
 
         if (oldValue != null) {

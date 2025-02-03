@@ -157,7 +157,7 @@ public class TaskTableView extends TableView<Task> {
     }
 
     public void setTasks(final List<Task> tasks) {
-        List<Task> sorted = tasks.stream().filter(Task::isValid).sorted(Comparator.comparingInt(Task::getOrder)).collect(Collectors.toList());
+        List<Task> sorted = tasks.stream().filter(Task::isValid).sorted(Comparator.comparingInt(Task::getOrder)).collect(Collectors.toList()).reversed();
         ObservableList<Task> observableTasks = FXCollections.observableArrayList(sorted);
         observableTasks.add(new Task()); // Add empty line for task creation
         FilteredList<Task> filteredTasks = new FilteredList<>(observableTasks, task -> task.getStatus() != Status.Closed || !hideClosed.get());
