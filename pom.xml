@@ -123,12 +123,33 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>com.github.ypiel.chronotask.ChronoTask</mainClass>
+                    <mainClass>com.github.ypiel.chronotask.Main</mainClass>
                     <options>
-                        <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:7005</option>
-                        <!-- option>-Dchrono.task.dir=/tmp/chrono-task</option -->
+                        <!-- option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:7005</option -->
+                        <option>-Dchrono.task.dir=/home/yie/chrono-task-new/</option>
                     </options>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <!-- Sets the Main-Class in MANIFEST.MF -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.github.ypiel.chronotask.Main</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

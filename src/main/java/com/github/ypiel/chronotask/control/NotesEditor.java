@@ -10,9 +10,12 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -38,8 +41,11 @@ public class NotesEditor extends VBox {
     private static final String WEBVIEW_CSS;
     static {
         try {
-            WEBVIEW_CSS = Files.readString(Paths.get(NotesEditor.class.getClassLoader()
-                    .getResource("webview.css").getPath()));
+            InputStream cssStream = NotesEditor.class.getResourceAsStream("/webview.css");
+            if (cssStream == null) {
+                throw new IOException("CSS file not found");
+            }
+            WEBVIEW_CSS = new String(cssStream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to load CSS file", e);
         }
