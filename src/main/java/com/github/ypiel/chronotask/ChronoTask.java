@@ -62,7 +62,6 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
     private final DurationManager durationManager = new DurationManager();
 
     private TaskTableView taskTableView;
-    //private TaskTableView todoTableView;
 
     private ToggleButton btPause;
 
@@ -91,9 +90,6 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         final NotesEditor notesEditor = new NotesEditor();
 
         final DurationByDateTableView durationByDateTableView = new DurationByDateTableView();
-
-        //todoTableView = new TaskTableView();
-        //final DurationByDateTableView todoDurationByDateTableView = new DurationByDateTableView();
 
         taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             taskTableSelection(observable, oldValue, newValue, durationByDateTableView, notesEditor); //, todoTableView);
@@ -168,13 +164,6 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         durationByDateTableView.maxHeightProperty().bind(leftVBox.heightProperty().multiply(1.0 / 3.0));
         leftVBox.getChildren().addAll(taskTableView, durationByDateTableView);
 
-        //VBox rightVBox = new VBox();
-        //VBox.setVgrow(todoTableView, Priority.ALWAYS);
-        //VBox.setVgrow(todoDurationByDateTableView, Priority.ALWAYS);
-        //todoTableView.maxHeightProperty().bind(rightVBox.heightProperty().multiply(2.0 / 3.0));
-        //todoDurationByDateTableView.maxHeightProperty().bind(rightVBox.heightProperty().multiply(1.0 / 3.0));
-        //rightVBox.getChildren().addAll(todoTableView, todoDurationByDateTableView);
-
         TextField tfFilter = new TextField();
         taskTableView.getFilterProperty().bind(tfFilter.textProperty());
         Label lblFilter = new Label("Filter: ");
@@ -187,10 +176,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         Label lblForceDuration = new Label("Force duration (minutes)");
         Button btForceDuration = new Button("Force duration");
         btForceDuration.setOnAction(event -> {
-            //Task toUpdate = todoTableView.getSelectionModel().getSelectedItem();
-            //if (toUpdate == null) {
             Task toUpdate = taskTableView.getSelectionModel().getSelectedItem();
-            //}
 
             long spinnerValue = forceDurationSpinner.getValue();
             if (toUpdate != null && spinnerValue >= 0) {
@@ -230,7 +216,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         SpinnerValueFactory<Integer> valueFactory =
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 60, 2, 1);
         spinner.setValueFactory(valueFactory);
-        CheckBox cbDetailled = new CheckBox("Detailled");
+        CheckBox cbDetailled = new CheckBox("Detailed");
         cbDetailled.setSelected(true);
         Button btExport = new Button("Export");
         btExport.setOnAction(event -> {

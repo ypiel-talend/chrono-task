@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -85,6 +86,7 @@ public class TaskTableView extends TableView<Task> {
         // Tags
         ObservableList<String> availableTags = FXCollections.observableArrayList(Arrays.asList(ChronoTask.mainTopics));
         TableColumn<Task, List<String>> tagsColumn = new TableColumn<>("Tags");
+        tagsColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getTags()));
         tagsColumn.setCellFactory(column -> new TagsTableCell(availableTags));
 
 
@@ -175,6 +177,7 @@ public class TaskTableView extends TableView<Task> {
                             task.getShortDescription().toLowerCase(Locale.ROOT).contains(this.filterProperty.get().toLowerCase(Locale.ROOT)));
         });
         this.setItems(filteredTasks);
+        this.refresh();
     }
 
     public List<Task> getAllItems() {

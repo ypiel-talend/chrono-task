@@ -65,6 +65,16 @@ public class TagsTableCell extends TableCell<Task, List<String>> {
 
     @Override
     protected void updateItem(List<String> tags, boolean empty) {
+        //super.updateItem(tags, empty);
+        System.out.println("===> " + tags);
         super.updateItem(tags, empty);
+        if (empty || tags == null) {
+            setText(null);
+            setGraphic(null);
+        } else {
+            setText(String.join(", ", tags));
+            setGraphic(null);
+            setContentDisplay(ContentDisplay.TEXT_ONLY);
+        }
     }
 }
