@@ -230,6 +230,8 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         TabPane tabPane = new TabPane();
         Tab workingTab = new Tab("Work", splitPane);
         Tab exportTab = new Tab("Export", vbExport);
+        workingTab.setClosable(false);
+        exportTab.setClosable(false);
         tabPane.getTabs().addAll(workingTab, exportTab);
 
         VBox main = new VBox(tabPane, bottom);
