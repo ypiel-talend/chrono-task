@@ -12,4 +12,8 @@ How to run:
 ```shell
 mvn javafx:run
 ```
+or
+```json
+java -D"chrono.task.dir=c:/YIE/chrono-task/" -D"chrono.task.file=chrono202505.json" -jar .\target\chrono-task-1.1-SNAPSHOT.jar
+```
 
