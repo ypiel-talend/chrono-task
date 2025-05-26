@@ -69,7 +69,6 @@ public class NotesEditor extends VBox {
             public void changed(ObservableValue<? extends Worker.State> observable, Worker.State oldValue, Worker.State newValue) {
                 if (newValue == Worker.State.SUCCEEDED) {
                     // Restore the scroll position
-                    System.out.println("************** Set scroll position: " + scrollpos);
                     webEngine.executeScript("window.scrollTo(0, " + scrollpos + ");");
                 }
             }

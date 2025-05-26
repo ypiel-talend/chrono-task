@@ -28,15 +28,14 @@ public class IntervalAutoTaskAction implements AutoTaskAction {
             destination.pause();
         }
 
-        System.out.println("IntervalAutoTaskAction: " + this.destination.getSelectedMainTask().getViewId());
         String title = this.destination.getSelectedMainTask().getViewId() + ": " + this.destination.getSelectedMainTask().getShortDescription();
         title = (this.destination.isPaused() ? "ChronoTask is paused: " : "Continue: ") + title;
 
-        String sub = this.destination.getSelectedTodo() == null ? "" : "Todo: " +this.destination.getSelectedTodo().getViewId() + ": " + this.destination.getSelectedTodo().getShortDescription();
+        //String sub = this.destination.getSelectedTodo() == null ? "" : "Todo: " +this.destination.getSelectedTodo().getViewId() + ": " + this.destination.getSelectedTodo().getShortDescription();
 
         Notifications.create()
                 .title(title)
-                .text(sub)
+                //.text(sub)
                 .hideAfter(javafx.util.Duration.seconds(7))
                 .position(Pos.BOTTOM_RIGHT)
                 .action(new Action("Continue", event -> {

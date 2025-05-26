@@ -1,6 +1,6 @@
 package com.github.ypiel.chronotask.control;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,10 +8,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
-
-import com.github.ypiel.chronotask.ChronoTask;
-import com.github.ypiel.chronotask.model.Status;
-import com.github.ypiel.chronotask.model.Task;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -29,6 +25,11 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.converter.DefaultStringConverter;
 import javafx.util.converter.IntegerStringConverter;
+
+import com.github.ypiel.chronotask.ChronoTask;
+import com.github.ypiel.chronotask.model.Category;
+import com.github.ypiel.chronotask.model.Task;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -60,11 +61,11 @@ public class TaskTableView extends TableView<Task> {
             task.setOrder(event.getNewValue());
         });
 
-        TableColumn<Task, String> idColumn = new TableColumn<>("ID");
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
-        idColumn.setOnEditCommit(event -> {
+        TableColumn<Task, String> jiraColumn = new TableColumn<>("Jira");
+        jiraColumn.setCellValueFactory(new PropertyValueFactory<>("jira"));
+        jiraColumn.setOnEditCommit(event -> {
             Task task = event.getRowValue();
-            task.setId(event.getNewValue());
+            task.setJira(event.getNewValue());
         });
 
         TableColumn<Task, String> shortDescriptionColumn = new TableColumn<>("Short Description");
@@ -74,11 +75,11 @@ public class TaskTableView extends TableView<Task> {
             task.setShortDescription(event.getNewValue());
         });
 
-        TableColumn<Task, Status> statusColumn = new TableColumn<>("Status");
-        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
-        statusColumn.setOnEditCommit(event -> {
+        TableColumn<Task, Category> categColumn = new TableColumn<>("Category");
+        categColumn.setCellValueFactory(new PropertyValueFactory<>("Category"));
+        categColumn.setOnEditCommit(event -> {
             Task task = event.getRowValue();
-            task.setStatus(event.getNewValue());
+            task.setCategory(event.getNewValue());
         });
 
         // Tags
@@ -94,7 +95,7 @@ public class TaskTableView extends TableView<Task> {
             {
                 openLink.setOnAction(event -> {
                     Task task = getTableView().getItems().get(getIndex());
-                    final String id = task.getId();
+                    final String id = task.getJira();
                     log.debug("Try to open link: {}", id);
                     if (id != null && id.startsWith("http")) {
                         try {
@@ -119,12 +120,12 @@ public class TaskTableView extends TableView<Task> {
         });
 
 
-        this.getColumns().addAll(orderColumn, idColumn, shortDescriptionColumn, statusColumn, tagsColumn, openColumn);
+        this.getColumns().addAll(orderColumn, jiraColumn, shortDescriptionColumn, categColumn, tagsColumn, openColumn);
 
         // Set cell factories to allow editing
         this.setEditable(true);
         orderColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        idColumn.setCellFactory(column -> new TextFieldTableCell<Task, String>(new DefaultStringConverter()) {
+        jiraColumn.setCellFactory(column -> new TextFieldTableCell<Task, String>(new DefaultStringConverter()) {
             @Override
             public void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -141,7 +142,7 @@ public class TaskTableView extends TableView<Task> {
             }
         });
         shortDescriptionColumn.setCellFactory(TextFieldTableCell.forTableColumn());
-        statusColumn.setCellFactory(ComboBoxTableCell.forTableColumn(Status.values()));
+        categColumn.setCellFactory(ComboBoxTableCell.forTableColumn(Category.values()));
 
         // Add a key event handler to add a new task when ENTER is pressed
         this.setOnKeyPressed(event -> {
@@ -169,8 +170,8 @@ public class TaskTableView extends TableView<Task> {
         ObservableList<Task> observableTasks = FXCollections.observableArrayList(sorted);
         observableTasks.add(new Task()); // Add empty line for task creation
         FilteredList<Task> filteredTasks = new FilteredList<>(observableTasks, task -> {
-            return (task.getStatus() != Status.Closed || !hideClosed.get()) &&
-                    (task.getId().toLowerCase(Locale.ROOT).contains(this.filterProperty.get().toLowerCase(Locale.ROOT)) ||
+            return (!task.getTags().contains("DONE") || !hideClosed.get()) &&
+                    (task.getJira().toLowerCase(Locale.ROOT).contains(this.filterProperty.get().toLowerCase(Locale.ROOT)) ||
                             task.getShortDescription().toLowerCase(Locale.ROOT).contains(this.filterProperty.get().toLowerCase(Locale.ROOT)));
         });
         this.setItems(filteredTasks);

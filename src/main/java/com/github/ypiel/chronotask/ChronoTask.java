@@ -54,15 +54,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ChronoTask extends Application implements AutoTaskAction.Destination {
 
-    public final static String[] mainTopics = {"TDI", "QCS", "TCK", "PROCESS", "CONNECTIVITY CONVERGENCE", "CODE REVIEW", "MEETING"};
+    public final static String[] mainTopics = {"TDI", "QCS", "TCK", "PROCESS", "CONNECTIVITY CONVERGENCE", "CODE REVIEW", "MEETING", "DONE"};
 
     private static final String SAVE_DIR = System.getProperty("chrono.task.dir", System.getProperty("user.home") + "/chrono-task");
-    private static final String SAVE_FILE = Paths.get(SAVE_DIR, "chrono-task.json").toString();
+    private static final String SAVE_FILE = Paths.get(SAVE_DIR, System.getProperty("chrono.task.file", "chrono-task.json")).toString();
 
     private final DurationManager durationManager = new DurationManager();
 
     private TaskTableView taskTableView;
-    private TaskTableView todoTableView;
+    //private TaskTableView todoTableView;
 
     private ToggleButton btPause;
 
@@ -76,6 +76,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
 
     @Override
     public void start(Stage primaryStage) {
+        log.info("ChronoTask started with save file: {}", SAVE_FILE);
         this.stage = primaryStage;
         initSerialization();
 
@@ -91,11 +92,11 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
 
         final DurationByDateTableView durationByDateTableView = new DurationByDateTableView();
 
-        todoTableView = new TaskTableView();
-        final DurationByDateTableView todoDurationByDateTableView = new DurationByDateTableView();
+        //todoTableView = new TaskTableView();
+        //final DurationByDateTableView todoDurationByDateTableView = new DurationByDateTableView();
 
         taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            taskTableSelection(observable, oldValue, newValue, durationByDateTableView, notesEditor, todoTableView);
+            taskTableSelection(observable, oldValue, newValue, durationByDateTableView, notesEditor); //, todoTableView);
         });
 
         Timeline timelineRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
@@ -112,17 +113,6 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         }));
         autoSave.setCycleCount(Timeline.INDEFINITE);
         autoSave.play();
-
-        todoTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            todoTableSelection(observable, oldValue, newValue, todoDurationByDateTableView, notesEditor);
-        });
-
-
-        Timeline timelineTodoRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
-            todoDurationByDateTableView.refresh();
-        }));
-        timelineTodoRefresh.setCycleCount(Timeline.INDEFINITE);
-        timelineTodoRefresh.play();
 
         btPause = new ToggleButton("Pause");
         btPause.setOnAction(event -> {
@@ -178,12 +168,12 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         durationByDateTableView.maxHeightProperty().bind(leftVBox.heightProperty().multiply(1.0 / 3.0));
         leftVBox.getChildren().addAll(taskTableView, durationByDateTableView);
 
-        VBox rightVBox = new VBox();
-        VBox.setVgrow(todoTableView, Priority.ALWAYS);
-        VBox.setVgrow(todoDurationByDateTableView, Priority.ALWAYS);
-        todoTableView.maxHeightProperty().bind(rightVBox.heightProperty().multiply(2.0 / 3.0));
-        todoDurationByDateTableView.maxHeightProperty().bind(rightVBox.heightProperty().multiply(1.0 / 3.0));
-        rightVBox.getChildren().addAll(todoTableView, todoDurationByDateTableView);
+        //VBox rightVBox = new VBox();
+        //VBox.setVgrow(todoTableView, Priority.ALWAYS);
+        //VBox.setVgrow(todoDurationByDateTableView, Priority.ALWAYS);
+        //todoTableView.maxHeightProperty().bind(rightVBox.heightProperty().multiply(2.0 / 3.0));
+        //todoDurationByDateTableView.maxHeightProperty().bind(rightVBox.heightProperty().multiply(1.0 / 3.0));
+        //rightVBox.getChildren().addAll(todoTableView, todoDurationByDateTableView);
 
         TextField tfFilter = new TextField();
         taskTableView.getFilterProperty().bind(tfFilter.textProperty());
@@ -197,10 +187,10 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         Label lblForceDuration = new Label("Force duration (minutes)");
         Button btForceDuration = new Button("Force duration");
         btForceDuration.setOnAction(event -> {
-            Task toUpdate = todoTableView.getSelectionModel().getSelectedItem();
-            if (toUpdate == null) {
-                toUpdate = taskTableView.getSelectionModel().getSelectedItem();
-            }
+            //Task toUpdate = todoTableView.getSelectionModel().getSelectedItem();
+            //if (toUpdate == null) {
+            Task toUpdate = taskTableView.getSelectionModel().getSelectedItem();
+            //}
 
             long spinnerValue = forceDurationSpinner.getValue();
             if (toUpdate != null && spinnerValue >= 0) {
@@ -217,7 +207,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         });
 
 
-        splitPane.getItems().addAll(leftVBox, rightVBox, notesEditor);
+        splitPane.getItems().addAll(leftVBox, notesEditor); //rightVBox, notesEditor);
         Separator separatorB = new Separator(Orientation.VERTICAL);
         separatorB.setStyle("-fx-padding: 0 5 0 5;");
         Separator separatorA = new Separator(Orientation.VERTICAL);
@@ -302,7 +292,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
                 sb.append("\n");
             }
             sb.append(tab ? "    - " : "- ")
-                    .append(t.getId()).append(": ").append(t.getShortDescription());
+                    .append(t.getJira()).append(": ").append(t.getShortDescription());
 
             List<Task> subTasks = t.getSubTasks();
             String subs = taskFor(subTasks, date, mini, true);
@@ -360,7 +350,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
                         .orElse("Today: 0h 0m 0s"));
     }
 
-    private void todoTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView todoDurationByDateTableView, NotesEditor notesEditor) {
+    /*private void todoTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView todoDurationByDateTableView, NotesEditor notesEditor) {
         if (observable.getValue() == null) {
             todoDurationByDateTableView.setDurationsByDate(Collections.emptyList());
         }
@@ -388,9 +378,9 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
                 notesEditor.setTask(newValue);
             }
         }
-    }
+    }*/
 
-    private void taskTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView durationByDateTableView, NotesEditor notesEditor, TaskTableView todoTableView) {
+    private void taskTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView durationByDateTableView, NotesEditor notesEditor) { //, TaskTableView todoTableView) {
         if (observable.getValue() == null) {
             durationByDateTableView.setDurationsByDate(Collections.emptyList());
         }
@@ -404,8 +394,8 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
             durationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
             newValue.setDurationsByDate(durationByDateTableView.getItems());
 
-            todoTableView.setTasks(newValue.getSubTasks());
-            newValue.setSubTasks(todoTableView.getAllItems());
+            /*todoTableView.setTasks(newValue.getSubTasks());
+            newValue.setSubTasks(todoTableView.getAllItems());*/
             startAutoTaskAction(newValue, stage);
             if (newValue.isValid()) {
                 durationManager.addTasks(newValue);
@@ -511,10 +501,10 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         return taskTableView.getSelectionModel().getSelectedItem();
     }
 
-    @Override
+    /*@Override
     public Task getSelectedTodo() {
         return todoTableView.getSelectionModel().getSelectedItem();
-    }
+    }*/
 
     @Override
     public void moveToFront() {
@@ -524,7 +514,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
     @Override
     public void unselectAll() {
         taskTableView.getSelectionModel().clearSelection();
-        todoTableView.getSelectionModel().clearSelection();
+        //todoTableView.getSelectionModel().clearSelection();
     }
 
     @Override

@@ -1,7 +1,6 @@
 package com.github.ypiel.chronotask.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.github.ypiel.chronotask.business.AutoTaskAction;
 import com.github.ypiel.chronotask.business.IntervalAutoTaskAction;
 
 import java.io.Serializable;
@@ -9,7 +8,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,10 +19,10 @@ import lombok.ToString;
 @NoArgsConstructor
 public class Task implements Serializable {
     private int order = 0;
-    private String id = "";
+    private String jira = "";
     private String shortDescription = "";
     private String notes = "";
-    private Status status = Status.New;
+    private Category category = Category.Fix;
     private List<String> tags = new ArrayList<>();
     private List<Task> subTasks = new ArrayList<>(5);
     private List<DurationByDate> durationsByDate = new ArrayList<>(10);
@@ -32,21 +30,21 @@ public class Task implements Serializable {
 
     @JsonIgnore
     public boolean isValid(){
-        return order > 0 && id.length() > 3;
+        return order > 0 && !shortDescription.trim().isEmpty();
     }
 
     @JsonIgnore
     public String getViewId(){
         if(isIdUrl()){
-            int lastSegment = this.getId().lastIndexOf('/');
-            return this.getId().substring(lastSegment + 1);
+            int lastSegment = this.getJira().lastIndexOf('/');
+            return this.getJira().substring(lastSegment + 1);
         }
-        return this.getId();
+        return this.getJira();
     }
 
     @JsonIgnore
     public boolean isIdUrl() {
-        return this.getId().startsWith("http");
+        return this.getJira().startsWith("http");
     }
 
     @Data

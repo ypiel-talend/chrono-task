@@ -74,7 +74,7 @@ public class DurationManager {
 
                     long millisToAdd = current - lastTime.get();
                     durationOfToday.setDuration(durationOfToday.getDuration().plusMillis(millisToAdd));
-                    log.debug("Task {} + {}ms => duration: {}", t.getId(), millisToAdd,durationOfToday.getDuration());
+                    log.debug("Task {} + {}ms => duration: {}", t.getJira(), millisToAdd,durationOfToday.getDuration());
                 }
                 lastTime.set(current);
             }
