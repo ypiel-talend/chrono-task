@@ -252,6 +252,14 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
             durationManager.resume();
             autoSaveEnabled.set(true);
         }
+
+        if (autoTaskActionTimeline.isPresent()) {
+            if (btPause.isSelected()) {
+                autoTaskActionTimeline.get().pause();
+            }
+            else{
+                autoTaskActionTimeline.get().play();            }
+        }
     }
 
     private void exportAction(DatePicker datePicker, Spinner<Integer> spinner, TextArea taExport, boolean detailled) {
@@ -335,36 +343,6 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
                 .setText(total.map(d -> "Today: " + d.toHours() + "h " + d.toMinutesPart() + "m " + d.toSecondsPart() + "s")
                         .orElse("Today: 0h 0m 0s"));
     }
-
-    /*private void todoTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView todoDurationByDateTableView, NotesEditor notesEditor) {
-        if (observable.getValue() == null) {
-            todoDurationByDateTableView.setDurationsByDate(Collections.emptyList());
-        }
-
-        // Fix a bug about adding a todo to a task
-        Task selectedTask = taskTableView.getSelectionModel().getSelectedItem();
-        if (selectedTask != null && newValue != null) {
-            Optional<Task> todo = selectedTask.getSubTasks().stream()
-                    .filter(t -> t.equals(newValue)).findAny();
-            if (!todo.isPresent()) {
-                selectedTask.getSubTasks().add(newValue);
-            }
-        }
-
-        if (oldValue != null) {
-            durationManager.removeTasks(oldValue);
-            notesEditor.removeTask();
-        }
-
-        if (newValue != null) {
-            todoDurationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
-            newValue.setDurationsByDate(todoDurationByDateTableView.getItems());
-            if (newValue.isValid()) {
-                durationManager.addTasks(newValue);
-                notesEditor.setTask(newValue);
-            }
-        }
-    }*/
 
     private void taskTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView durationByDateTableView, NotesEditor notesEditor) { //, TaskTableView todoTableView) {
         if (observable.getValue() == null) {

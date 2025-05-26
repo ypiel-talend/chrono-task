@@ -60,8 +60,8 @@ public class IntervalAutoTaskAction implements AutoTaskAction {
 
     @Override
     public Duration getInterval() {
-        return Duration.ofMinutes(25);
-        //return Duration.ofSeconds(5);
+        //return Duration.ofMinutes(25);
+        return Duration.ofSeconds(5);
     }
 
     @Override
