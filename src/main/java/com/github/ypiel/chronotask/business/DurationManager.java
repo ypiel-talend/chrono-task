@@ -103,7 +103,12 @@ public class DurationManager {
 
     public String toString(){
         String action = this.isPaused.get() ? "[Pause(" : "[Chrono(";
-        String sTasks = this.getTasks().stream().map(t -> t.getViewId()).collect(Collectors.joining(" / ", action, ")]"));
+
+        String sTasks = this.getTasks().stream().map(t -> {
+            String limitedDesc =  t.getShortDescription().length() > 21 ? t.getShortDescription().substring(0, 20)+"..."
+                    : t.getShortDescription();
+            return t.getOrder() + ":"+t.getJira()+":"+limitedDesc;
+        }).collect(Collectors.joining(" / ", action, ")]"));
         return sTasks;
     }
 

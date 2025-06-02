@@ -47,6 +47,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -91,8 +92,10 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
 
         final DurationByDateTableView durationByDateTableView = new DurationByDateTableView();
 
+        final ToggleButton tbLock = new ToggleButton("Locked");
+
         taskTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            taskTableSelection(observable, oldValue, newValue, durationByDateTableView, notesEditor); //, todoTableView);
+            taskTableSelection(observable, oldValue, newValue, durationByDateTableView, notesEditor, tbLock); //, todoTableView);
         });
 
         Timeline timelineRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
@@ -192,14 +195,13 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
 
         });
 
-
         splitPane.getItems().addAll(leftVBox, notesEditor); //rightVBox, notesEditor);
         Separator separatorB = new Separator(Orientation.VERTICAL);
         separatorB.setStyle("-fx-padding: 0 5 0 5;");
         Separator separatorA = new Separator(Orientation.VERTICAL);
         separatorA.setStyle("-fx-padding: 0 5 0 5;");
 
-        HBox bottom = new HBox(btPause, tbHideClosed, currentTasks, dayDuration, separatorA, lblForceDuration, forceDurationSpinner, btForceDuration, separatorB, lblFilter, tfFilter) {
+        HBox bottom = new HBox(btPause, tbHideClosed, currentTasks, dayDuration, separatorA, lblForceDuration, forceDurationSpinner, btForceDuration, separatorB, lblFilter, tfFilter, tbLock) {
             @Override
             protected void layoutChildren() {
                 super.layoutChildren();
@@ -258,9 +260,9 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         if (autoTaskActionTimeline.isPresent()) {
             if (btPause.isSelected()) {
                 autoTaskActionTimeline.get().pause();
+            } else {
+                autoTaskActionTimeline.get().play();
             }
-            else{
-                autoTaskActionTimeline.get().play();            }
         }
     }
 
@@ -346,7 +348,11 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
                         .orElse("Today: 0h 0m 0s"));
     }
 
-    private void taskTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView durationByDateTableView, NotesEditor notesEditor) { //, TaskTableView todoTableView) {
+    private void taskTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView durationByDateTableView, NotesEditor notesEditor, ToggleButton tbLock) { //, TaskTableView todoTableView) {
+        if(tbLock.isSelected()){
+            return; // Do not change selection if locked
+        }
+
         if (observable.getValue() == null) {
             durationByDateTableView.setDurationsByDate(Collections.emptyList());
         }
