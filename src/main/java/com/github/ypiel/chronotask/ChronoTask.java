@@ -118,7 +118,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
             doPause();
         });
 
-        Label currentTasks = new Label("");
+        Label currentTaskLabel = new Label("");
         Label dayDuration = new Label("");
         Timeline dayDurationRefresh = new Timeline(new KeyFrame(Duration.seconds(30), event -> {
             updateDayDuration(dayDuration);
@@ -129,32 +129,32 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         durationManager.addListener(new DurationManager.DurationManagerListener() {
             @Override
             public void onTaskDurationAddTask(DurationManager durationManager, Task task) {
-                currentTasks.setText(durationManager.toString());
+                currentTaskLabel.setText(durationManager.toString());
             }
 
             @Override
             public void onTaskDurationRemoveTask(DurationManager durationManager, Task task) {
-                currentTasks.setText(durationManager.toString());
+                currentTaskLabel.setText(durationManager.toString());
             }
 
             @Override
             public void onTaskDurationStart(DurationManager durationManager) {
-                currentTasks.setText(durationManager.toString());
+                currentTaskLabel.setText(durationManager.toString());
             }
 
             @Override
             public void onTaskDurationStop(DurationManager durationManager) {
-                currentTasks.setText(durationManager.toString());
+                currentTaskLabel.setText(durationManager.toString());
             }
 
             @Override
             public void onTaskDurationPause(DurationManager durationManager) {
-                currentTasks.setText(durationManager.toString());
+                currentTaskLabel.setText(durationManager.toString());
             }
 
             @Override
             public void onTaskDurationResume(DurationManager durationManager) {
-                currentTasks.setText(durationManager.toString());
+                currentTaskLabel.setText(durationManager.toString());
             }
         });
 
@@ -162,10 +162,11 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         SplitPane splitPane = new SplitPane();
         VBox leftVBox = new VBox();
         VBox.setVgrow(taskTableView, Priority.ALWAYS);
+        VBox.setVgrow(currentTaskLabel, Priority.ALWAYS);
         VBox.setVgrow(durationByDateTableView, Priority.ALWAYS);
         taskTableView.maxHeightProperty().bind(leftVBox.heightProperty().multiply(2.0 / 3.0));
         durationByDateTableView.maxHeightProperty().bind(leftVBox.heightProperty().multiply(1.0 / 3.0));
-        leftVBox.getChildren().addAll(taskTableView, durationByDateTableView);
+        leftVBox.getChildren().addAll(taskTableView, currentTaskLabel, durationByDateTableView);
 
         TextField tfFilter = new TextField();
         taskTableView.getFilterProperty().bind(tfFilter.textProperty());
@@ -195,17 +196,17 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
 
         });
 
-        splitPane.getItems().addAll(leftVBox, notesEditor); //rightVBox, notesEditor);
+        splitPane.getItems().addAll(leftVBox, notesEditor);
         Separator separatorB = new Separator(Orientation.VERTICAL);
         separatorB.setStyle("-fx-padding: 0 5 0 5;");
         Separator separatorA = new Separator(Orientation.VERTICAL);
         separatorA.setStyle("-fx-padding: 0 5 0 5;");
 
-        HBox bottom = new HBox(btPause, tbHideClosed, currentTasks, dayDuration, separatorA, lblForceDuration, forceDurationSpinner, btForceDuration, separatorB, lblFilter, tfFilter, tbLock) {
+        HBox bottom = new HBox(btPause, tbHideClosed, dayDuration, separatorA, lblForceDuration, forceDurationSpinner, btForceDuration, separatorB, lblFilter, tfFilter, tbLock) {
             @Override
             protected void layoutChildren() {
                 super.layoutChildren();
-                double maxHeight = Math.max(btPause.getHeight(), currentTasks.getHeight());
+                double maxHeight = btPause.getHeight();
                 setMinHeight(maxHeight);
                 setPrefHeight(maxHeight);
                 setMaxHeight(maxHeight);
@@ -350,6 +351,9 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
 
     private void taskTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView durationByDateTableView, NotesEditor notesEditor, ToggleButton tbLock) { //, TaskTableView todoTableView) {
         if(tbLock.isSelected()){
+            if(newValue != null && newValue.isValid()){
+                notesEditor.setTask(newValue);
+            }
             return; // Do not change selection if locked
         }
 
@@ -366,8 +370,6 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
             durationByDateTableView.setDurationsByDate(newValue.getDurationsByDate());
             newValue.setDurationsByDate(durationByDateTableView.getItems());
 
-            /*todoTableView.setTasks(newValue.getSubTasks());
-            newValue.setSubTasks(todoTableView.getAllItems());*/
             startAutoTaskAction(newValue, stage);
             if (newValue.isValid()) {
                 durationManager.addTasks(newValue);
