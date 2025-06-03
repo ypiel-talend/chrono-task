@@ -22,7 +22,7 @@ public class DurationManager {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> scheduledFuture;
-    private final List<Task> tasks = new ArrayList<>();
+    private Optional<Task> task = Optional.empty();
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
     private final AtomicLong lastTime = new AtomicLong(0);
@@ -37,17 +37,17 @@ public class DurationManager {
         listeners.add(listener);
     }
 
-    public List<Task> getTasks() {
-        return Collections.unmodifiableList(this.tasks);
+    public Optional<Task> getTask() {
+        return this.task;
     }
 
     public void addTasks(Task task) {
-        this.tasks.add(task);
+        this.task = Optional.of(task);
         listeners.forEach(l -> l.onTaskDurationAddTask(this, task));
     }
 
     public void removeTasks(Task task) {
-        this.tasks.remove(task);
+        this.task = Optional.empty();
         listeners.forEach(l -> l.onTaskDurationRemoveTask(this, task));
     }
 
@@ -59,7 +59,8 @@ public class DurationManager {
                 LocalDate now = LocalDate.now();
 
                 long current = System.currentTimeMillis();
-                for (Task t : tasks) {
+                if (task.isPresent()) {
+                    Task t = task.get();
                     List<Task.DurationByDate> durationsByDate = t.getDurationsByDate();
                     Optional<Task.DurationByDate> durationOfTodayOpt = durationsByDate.stream().filter(d -> d.getDate().equals(now)).findAny();
 
@@ -74,7 +75,7 @@ public class DurationManager {
 
                     long millisToAdd = current - lastTime.get();
                     durationOfToday.setDuration(durationOfToday.getDuration().plusMillis(millisToAdd));
-                    log.debug("Task {} + {}ms => duration: {}", t.getJira(), millisToAdd,durationOfToday.getDuration());
+                    log.debug("Task {} + {}ms => duration: {}", t.getJira(), millisToAdd, durationOfToday.getDuration());
                 }
                 lastTime.set(current);
             }
@@ -101,23 +102,32 @@ public class DurationManager {
         listeners.forEach(l -> l.onTaskDurationStop(this));
     }
 
-    public String toString(){
+    public String toString() {
         String action = this.isPaused.get() ? "[Pause(" : "[Chrono(";
 
-        String sTasks = this.getTasks().stream().map(t -> {
-            String limitedDesc =  t.getShortDescription().length() > 21 ? t.getShortDescription().substring(0, 20)+"..."
+        if(task.isPresent()){
+            Task t = task.get();
+            String limitedDesc = t.getShortDescription().length() > 21 ? t.getShortDescription().substring(0, 20) + "..."
                     : t.getShortDescription();
-            return t.getOrder() + ":"+t.getJira()+":"+limitedDesc;
-        }).collect(Collectors.joining(" / ", action, ")]"));
-        return sTasks;
+            action += t.getOrder()+": "+t.getJira() + ": " + limitedDesc;
+        } else {
+            action += "No task selected)=]";
+        }
+
+        return action;
     }
 
     public interface DurationManagerListener {
         void onTaskDurationAddTask(DurationManager durationManager, Task task);
+
         void onTaskDurationRemoveTask(DurationManager durationManager, Task task);
+
         void onTaskDurationStart(DurationManager durationManager);
+
         void onTaskDurationStop(DurationManager durationManager);
+
         void onTaskDurationPause(DurationManager durationManager);
+
         void onTaskDurationResume(DurationManager durationManager);
 
     }
