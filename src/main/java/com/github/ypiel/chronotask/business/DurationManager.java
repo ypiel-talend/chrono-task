@@ -107,9 +107,7 @@ public class DurationManager {
 
         if(task.isPresent()){
             Task t = task.get();
-            String limitedDesc = t.getShortDescription().length() > 21 ? t.getShortDescription().substring(0, 20) + "..."
-                    : t.getShortDescription();
-            action += t.getOrder()+": "+t.getJira() + ": " + limitedDesc;
+            action += t.getOrder()+": "+t.getJira() + ": " + t.getShortDescription();
         } else {
             action += "No task selected)=]";
         }
