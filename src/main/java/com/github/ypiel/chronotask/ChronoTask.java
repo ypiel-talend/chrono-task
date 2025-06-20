@@ -99,6 +99,10 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         });
 
         Timeline timelineRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            if(durationByDateTableView.isNoteEditing()){
+                return; // Do not refresh if editing a note
+            }
+
             durationByDateTableView.refresh();
         }));
         timelineRefresh.setCycleCount(Timeline.INDEFINITE);

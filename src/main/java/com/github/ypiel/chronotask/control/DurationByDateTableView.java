@@ -48,4 +48,8 @@ public class DurationByDateTableView extends TableView<DurationByDate> {
         durationByDateList.sort((o1, o2) -> o2.getDate().compareTo(o1.getDate()));
         this.setItems(FXCollections.observableArrayList(durationByDateList));
     }
+
+    public boolean isNoteEditing(){
+        return this.getEditingCell() != null && this.getEditingCell().getColumn() == 2; // Assuming notes is the third column
+    }
 }
