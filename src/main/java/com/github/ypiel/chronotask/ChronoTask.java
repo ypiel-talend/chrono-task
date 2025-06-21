@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -22,6 +23,7 @@ import com.github.ypiel.chronotask.control.DurationByDateTableView;
 import com.github.ypiel.chronotask.control.NotesEditor;
 import com.github.ypiel.chronotask.control.TaskTableView;
 import com.github.ypiel.chronotask.model.Task;
+import com.github.ypiel.chronotask.model.Task.DurationByDate;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -288,15 +290,30 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         for (Task t : tasks) {
             Optional<Task.DurationByDate> durationByDate = t.getDurationsByDate().stream().filter(d -> d.getDate().equals(date)).findAny();
 
+            String notes = t.getDurationsByDate().stream()
+                    .filter(e -> e.getDate().equals(date))
+                    .map(DurationByDate::getNotes)
+                    .flatMap(s -> List.of(s.split("/")).stream())
+                    .map(String::trim)
+                    .map("    - "::concat)
+                    .filter(n -> !"    - ".equals(n))
+                    .collect(Collectors.joining("\n"));
+
             if (!durationByDate.isPresent() || durationByDate.get().getDuration().compareTo(mini) < 0) {
                 continue;
             }
             if (!first) {
                 sb.append("\n");
             }
-            sb.append("- ")
-                    .append(t.getJira()).append(": ").append(t.getShortDescription());
+            sb.append("- ");
+            if (!t.getJira().trim().isEmpty()) {
+                sb.append(t.getJira()).append(": ");
+            }
+            sb.append(t.getShortDescription());
 
+            if(!notes.isEmpty()){
+                sb.append("\n").append(notes);
+            }
 
             first = false;
         }
@@ -312,6 +329,15 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         for (Task t : tasks) {
             Optional<Task.DurationByDate> durationByDate = t.getDurationsByDate().stream().filter(d -> d.getDate().equals(date)).findAny();
 
+            String notes = t.getDurationsByDate().stream()
+                    .filter(e -> e.getDate().equals(date))
+                    .map(DurationByDate::getNotes)
+                    .flatMap(s -> List.of(s.split("/")).stream())
+                    .map(String::trim)
+                    .map("    - "::concat)
+                    .filter(n -> !"    - ".equals(n))
+                    .collect(Collectors.joining("\n"));
+
             if (!durationByDate.isPresent() || durationByDate.get().getDuration().compareTo(mini) < 0) {
                 continue;
             }
@@ -322,8 +348,15 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
             }
 
             dayDuration = dayDuration.plus(duration);
-            sb.append(formatDuration(duration)).append(" - ")
-                    .append(t.getViewId()).append(": ").append(t.getShortDescription());
+            sb.append(formatDuration(duration)).append("\t");
+            if (!t.getViewId().trim().isEmpty()) {
+                sb.append(t.getViewId()).append(": ");
+            }
+
+            sb.append(t.getShortDescription());
+            if(!notes.isEmpty()){
+                sb.append("\n").append(notes);
+            }
 
             first = false;
         }
