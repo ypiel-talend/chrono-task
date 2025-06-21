@@ -24,7 +24,6 @@ public class Task implements Serializable {
     private String notes = "";
     private Category category = Category.Fix;
     private List<String> tags = new ArrayList<>();
-    private List<Task> subTasks = new ArrayList<>(5);
     private List<DurationByDate> durationsByDate = new ArrayList<>(10);
     private Class autoTaskAction = IntervalAutoTaskAction.class;
 

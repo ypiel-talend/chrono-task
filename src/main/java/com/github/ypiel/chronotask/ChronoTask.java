@@ -99,7 +99,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         });
 
         Timeline timelineRefresh = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
-            if(durationByDateTableView.isNoteEditing()){
+            if (durationByDateTableView.isNoteEditing()) {
                 return; // Do not refresh if editing a note
             }
 
@@ -276,13 +276,13 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         java.time.Duration mini = java.time.Duration.ofMinutes(spinner.getValue());
 
         String export = detailled ?
-                taskDurationFor(taskTableView.getAllItems(), localDate, mini, false) :
-                taskFor(taskTableView.getAllItems(), localDate, mini, false);
+                taskDurationFor(taskTableView.getAllItems(), localDate, mini) :
+                taskFor(taskTableView.getAllItems(), localDate, mini);
 
         taExport.setText(export);
     }
 
-    private String taskFor(List<Task> tasks, LocalDate date, java.time.Duration mini, boolean tab) {
+    private String taskFor(List<Task> tasks, LocalDate date, java.time.Duration mini) {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (Task t : tasks) {
@@ -294,12 +294,9 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
             if (!first) {
                 sb.append("\n");
             }
-            sb.append(tab ? "    - " : "- ")
+            sb.append("- ")
                     .append(t.getJira()).append(": ").append(t.getShortDescription());
 
-            List<Task> subTasks = t.getSubTasks();
-            String subs = taskFor(subTasks, date, mini, true);
-            sb.append(subs.trim().isEmpty() ? "" : "\n" + subs);
 
             first = false;
         }
@@ -307,7 +304,7 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
         return sb.toString();
     }
 
-    private String taskDurationFor(List<Task> tasks, LocalDate date, java.time.Duration mini, boolean tab) {
+    private String taskDurationFor(List<Task> tasks, LocalDate date, java.time.Duration mini) {
         StringBuilder sb = new StringBuilder();
 
         java.time.Duration dayDuration = java.time.Duration.ZERO;
@@ -325,19 +322,13 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
             }
 
             dayDuration = dayDuration.plus(duration);
-            sb.append(tab ? "    " : "").append(formatDuration(duration)).append(" - ")
+            sb.append(formatDuration(duration)).append(" - ")
                     .append(t.getViewId()).append(": ").append(t.getShortDescription());
-
-            List<Task> subTasks = t.getSubTasks();
-            String subs = taskDurationFor(subTasks, date, mini, true);
-            sb.append(subs.trim().isEmpty() ? "" : "\n" + subs);
 
             first = false;
         }
 
-        if (!tab) {
-            sb.append("\n\nWorking day: ").append(formatDuration(dayDuration));
-        }
+        sb.append("\n\nWorking day: ").append(formatDuration(dayDuration));
 
         return sb.toString();
     }
@@ -354,8 +345,8 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
     }
 
     private void taskTableSelection(ObservableValue<? extends Task> observable, Task oldValue, Task newValue, DurationByDateTableView durationByDateTableView, NotesEditor notesEditor, ToggleButton tbLock) { //, TaskTableView todoTableView) {
-        if(tbLock.isSelected()){
-            if(newValue != null && newValue.isValid()){
+        if (tbLock.isSelected()) {
+            if (newValue != null && newValue.isValid()) {
                 notesEditor.setTask(newValue);
             }
             return; // Do not change selection if locked
@@ -452,7 +443,6 @@ public class ChronoTask extends Application implements AutoTaskAction.Destinatio
     private List<Task> removeInvalidTasks(List<Task> tasks) {
         return tasks.stream()
                 .filter(Task::isValid)
-                .peek(task -> task.setSubTasks(removeInvalidTasks(task.getSubTasks())))
                 .toList();
     }
 
