@@ -168,11 +168,12 @@ public class TaskTableView extends TableView<Task> {
     }
 
     public void setTasks(final List<Task> tasks) {
-        List<Task> sorted = tasks.stream().filter(Task::isValid).sorted(Comparator.comparingInt(Task::getOrder)).collect(Collectors.toList()).reversed();
+        List<Task> sorted = tasks.stream().filter(Task::isValid).sorted().toList().reversed();
+
         ObservableList<Task> observableTasks = FXCollections.observableArrayList(sorted);
         observableTasks.add(new Task()); // Add empty line for task creation
         FilteredList<Task> filteredTasks = new FilteredList<>(observableTasks, task -> {
-            return (!task.getTags().contains("DONE") || !hideClosed.get()) &&
+            return (!task.getTags().contains(ChronoTask.DONE_STATUS) || !hideClosed.get()) &&
                     (task.getJira().toLowerCase(Locale.ROOT).contains(this.filterProperty.get().toLowerCase(Locale.ROOT)) ||
                             task.getShortDescription().toLowerCase(Locale.ROOT).contains(this.filterProperty.get().toLowerCase(Locale.ROOT)));
         });

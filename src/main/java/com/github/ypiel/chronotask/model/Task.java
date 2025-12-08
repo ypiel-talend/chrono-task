@@ -1,12 +1,14 @@
 package com.github.ypiel.chronotask.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.github.ypiel.chronotask.ChronoTask;
 import com.github.ypiel.chronotask.business.IntervalAutoTaskAction;
 
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -17,7 +19,7 @@ import lombok.ToString;
 @Data
 @ToString
 @NoArgsConstructor
-public class Task implements Serializable {
+public class Task implements Serializable, Comparable<Task> {
     private int order = 0;
     private String jira = "";
     private String shortDescription = "";
@@ -44,6 +46,24 @@ public class Task implements Serializable {
     @JsonIgnore
     public boolean isIdUrl() {
         return this.getJira().startsWith("http");
+    }
+
+    @JsonIgnore
+    public boolean isDone() {
+        return this.getTags().contains(ChronoTask.DONE_STATUS);
+    }
+
+    @Override
+    public int compareTo(Task other) {
+        if (this.isDone() && !other.isDone()) {
+            return -1;
+        }
+        else if (!this.isDone() && other.isDone()) {
+            return 1;
+        }
+        else {
+            return Integer.compare(this.getOrder(), other.getOrder());
+        }
     }
 
     @Data

@@ -2,11 +2,13 @@ package com.github.ypiel.chronotask;
 
 
 import java.io.FileWriter;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.CodeSource;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,7 +59,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ChronoTask extends Application implements AutoTaskAction.Destination {
 
-    public final static String[] mainTopics = {"TDI", "QCS", "TCK", "PROCESS", "CONNECTIVITY CONVERGENCE", "CODE REVIEW", "MEETING", "DONE"};
+    public final static String DONE_STATUS = "DONE";
+
+    public final static String[] mainTopics = {"TDI", "QCS", "TCK", "PROCESS", "CONNECTIVITY CONVERGENCE", "CODE REVIEW", "MEETING", DONE_STATUS};
 
     private static final String SAVE_DIR = System.getProperty("chrono.task.dir", System.getProperty("user.home") + "/chrono-task");
     private static final String SAVE_FILE = Paths.get(SAVE_DIR, System.getProperty("chrono.task.file", "chrono-task.json")).toString();
