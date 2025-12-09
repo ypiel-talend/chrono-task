@@ -14,7 +14,7 @@ public interface AutoTaskAction extends Runnable {
 
     interface Destination {
         Task getSelectedMainTask();
-        Task getSelectedTodo();
+        //Task getSelectedTodo();
         void moveToFront();
         void unselectAll();
         void pause();
